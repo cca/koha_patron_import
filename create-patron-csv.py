@@ -12,7 +12,7 @@ beginning. Note that a few things should be manually checked:
 """
 
 import csv  # docs.python.org/2/library/csv.html
-from mapping import category, major  # PCODE mappings, etc.
+from mapping import category, major  # map Informer info into Koha codes
 import datetime
 import argparse  # docs.python.org/2.7/library/argparse.html
 
@@ -31,26 +31,6 @@ args = parser.parse_args()
 # used later to construct notes
 today = datetime.date.today()
 yr = str(today.year)[2:]
-
-
-def blanks(i):
-    """
-    Return i number of blank spaces
-    Used in places where reading number of blanks is tough
-    """
-    return ''.join(' ' * i)
-
-
-def name(row):
-    """
-    Determine the best name form to use for a given person's row
-    Logic: if pref name, use it, otherwise combine given + surnames
-    """
-    if row['Preferred Name'] != '':
-        return row['Preferred Name']
-    else:
-        return row['Family Name'] + ', ' + row['Given Name']
-
 
 # files
 reader = csv.DictReader(open(args.file, 'r'))
