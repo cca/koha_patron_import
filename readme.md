@@ -4,7 +4,7 @@ CCA's outline of adding new patrons before the semester:
 
 - Run Informer report to get new student list in CSV format
 - Use "create-patron-csv.py" to convert the Informer output into Koha's CSV schema
-- Batch import the patron CSV on Koha's staff side
+- [Batch import the patron CSV](http://staff.cca.bywatersolutions.com/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
 
 ## Details
 
@@ -22,7 +22,7 @@ Inside Koha's staff side, select **Tools** & then **Import Patrons**. Use the fo
 - "Field to use for record matching" is "University ID"
 - We can leave all of the default values blank
 - Set "If matching record is already in the borrowers table:" to "Ignore this one, keep the existing one"
-- You can leave "Patron attributes" as is, it is superceded by the above setting
+- You can leave "Patron attributes" as is, it is superseded by the above setting
 - Click the **Import** button
 
 After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
@@ -31,7 +31,7 @@ After import, Koha informs you exactly how many patrons records were created, ov
 
 Included is a sample CSV export from Informer which can be used for test runs. All of the test records have surnames that begin with "ZTEST" so after a successful test, one can easily remove all the fake records like so:
 
-- run the [Test Patrons](/cgi-bin/koha/reports/guided_reports.pl?reports=62&phase=Run%20this%20report) report (just queries borrowers table `WHERE surname LIKE 'ZTEST%'`)
+- run the [Test Patrons](http://staff.cca.bywatersolutions.com/cgi-bin/koha/reports/guided_reports.pl?reports=62&phase=Run%20this%20report) report (just queries borrowers table `WHERE surname LIKE 'ZTEST%'`)
 - click each patron's link to open their details tab
 - select the **More** button & then **Delete**
 
