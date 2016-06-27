@@ -21,10 +21,10 @@ parser = argparse.ArgumentParser(
 parser.add_argument('file', type=str, help='CSV from Informer')
 parser.add_argument('term', type=str, choices=['F', 'sp', 'Su', 'PC'],
                     help='Term or season of present semester')
-parser.add_argument('-o', '--out', type=str, default='import.txt',
+parser.add_argument('-o', '--out', type=str, default='import.csv',
                     help='Name for output file')
 # hard-coding in Fall 2016 expiration as default
-parser.add_argument('-e', '--expiry', type=str, default='2016-12-14',
+parser.add_argument('-e', '--expiry', type=str, default='2016-12-16',
                     help='Patron record expiration date in ISO-8601 YYYY-MM-DD format')
 args = parser.parse_args()
 
@@ -60,14 +60,16 @@ for row in reader:
     patron['patron_attributes'] = 'UNIVID:' + row['ID']
     # map Academic Level "GR", "UG" to appropriate patron category
     # work around fact that PRECO students have no "Academic Level" value
-    if row['Programs'] == 'PRECO':
+    programs = row['Programs'].split(', ')
+    if 'PRECO' in programs:
         patron['categorycode'] = 'SPECIALSTU'  # pre-college student
     elif row['Academic Level'] in category:
         patron['categorycode'] = category[row['Academic Level']]
         # take first listed program & map to patron attribute authorized value
-        patron['patron_attributes'] += ',STUDENTMAJ:' + str(major[row['Programs'].split(',')[0]])
+        patron['patron_attributes'] += ',STUDENTMAJ:' + str(major[programs[0]])
     else:
-        raise Exception("Not pre-college & not a recognizable Academic Level, I don't know what patron category to use!", row)
+        raise Exception("Not pre-college & not a recognizable Academic Level, \
+        I don't know what patron category to use!", row)
 
     patron['dateenrolled'] = today.isoformat()
     patron['dateexpiry'] = args.expiry
@@ -81,6 +83,7 @@ for row in reader:
         patron['userid'] = un
 
     # note about expiration semester like "F16"
+    # @TODO is "contactnote" the right field for this?
     patron['contactnote'] = args.term + yr
 
     writer.writerow(patron)
