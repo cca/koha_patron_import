@@ -6,7 +6,7 @@ into a format appropriate for import into Koha.
 We should run it once per semester just prior to the semester's
 beginning. Note that a few things should be manually checked:
 
-    - ensure mappings (patron category, studnet major) haven't changed (see mapping.py)
+    - ensure mappings (patron category, student major) haven't changed (see mapping.py)
     - look up last day of the semester (this will account expiration date, which is captured in the "-e" flag when the script is run)
     - ensure Informer export column names are consistent with keys in the "row" dict (the script will throw exceptions if not)
 """
@@ -36,7 +36,7 @@ yr = str(today.year)[2:]
 reader = csv.DictReader(open(args.file, 'r'))
 # list of patron fields we must/can populate initially
 # see "koha_starter.csv" for the full list
-fields = ['cardnumber', 'surname', 'firstname', 'othernames', 'email', 'branchcode', 'categorycode', 'patron_attributes', 'dateenrolled', 'dateexpiry', 'userid', 'contactnote']
+fields = ['cardnumber', 'surname', 'firstname', 'othernames', 'email', 'branchcode', 'categorycode', 'patron_attributes', 'dateenrolled', 'dateexpiry', 'userid', 'borrowernotes']
 writer = csv.DictWriter(open(args.out, 'w'), fieldnames=fields)
 writer.writeheader()
 
@@ -83,7 +83,6 @@ for row in reader:
         patron['userid'] = un
 
     # note about expiration semester like "F16"
-    # @TODO is "contactnote" the right field for this?
-    patron['contactnote'] = args.term + yr
+    patron['borrowernotes'] = args.term + yr
 
     writer.writerow(patron)
