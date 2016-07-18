@@ -62,7 +62,7 @@ major = {
     'MARC2.MARC': 16,
     'MARC3.MARC': 16,
     'METAL.BFA': 15,
-    #'NODEG.UG': '   ',  # no degree, leave null
+    'NODEG.UG': 37,  # "Undergraduate Non-Degree Program"
     'PHOTO.BFA': 29,
     'PNTDR.BFA': 28,
     'PPMBA.MBA': 21,  # Public Policy MBA
