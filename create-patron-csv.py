@@ -61,12 +61,17 @@ for row in reader:
     # map Academic Level "GR", "UG" to appropriate patron category
     # work around fact that PRECO students have no "Academic Level" value
     programs = row['Programs'].split(', ')
-    if 'PRECO' in programs:
+    # check if list of programs contains _only_ PRECO
+    if programs == ['PRECO']:
         patron['categorycode'] = 'SPECIALSTU'  # pre-college student
     elif row['Academic Level'] in category:
         patron['categorycode'] = category[row['Academic Level']]
-        # take first listed program & map to patron attribute authorized value
-        patron['patron_attributes'] += ',STUDENTMAJ:' + str(major[programs[0]])
+        # take first program we can find in the majors map
+        # and add patron attribute with the program's authorized value
+        for program in programs:
+            if program in major:
+                patron['patron_attributes'] += ',STUDENTMAJ:' + str(major[program])
+                break
     else:
         raise Exception("Not pre-college & not a recognizable Academic Level, \
         I don't know what patron category to use!", row)
