@@ -16,13 +16,13 @@ python create-patron-csv.py -o output.csv -e 2016-12-14 input.csv F
 
 Where _output.csv_ is the name of the file you want created, _2016-12-14_ is the expiration date for the created patron records, _input.csv_ is the Informer report used as input, & _F_ is the shortened form of the semester's season (one of F, sp, Su, or PC). All of this information is contained in the help flag of create-patron-csv.py; run `python create-patron-csv.py -h`. If your file names have spaces in them, you can wrap them in quotation marks.
 
-Inside Koha's staff side, select **Tools** & then **Import Patrons**. Use the following settings:
+Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
 - Import file is the CSV we just created
 - "Field to use for record matching" is "University ID"
 - We can leave all of the default values blank
-- Set "If matching record is already in the borrowers table:" to "Ignore this one, keep the existing one"
-- You can leave "Patron attributes" as is, it is superseded by the above setting
+- "If matching record is already in the borrowers table:" should be "Ignore this one, keep the existing one" (the default)
+- Leave "Patron attributes" as is, it is superseded by the above setting
 - Click the **Import** button
 
 After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
