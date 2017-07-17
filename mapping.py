@@ -59,6 +59,7 @@ major = {
     'MAAD1.MAAD': 19,
     'MAAD2.MAAD': 19,
     'MAAD3.MAAD': 19,
+    'MARCH.MARC': 16,
     'MARC2.MARC': 16,
     'MARC3.MARC': 16,
     'METAL.BFA': 15,
