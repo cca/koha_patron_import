@@ -7,7 +7,7 @@ We should run it once per semester just prior to the semester's
 beginning. Note that a few things should be manually checked:
 
     - ensure mappings (patron category, student major) haven't changed (see mapping.py)
-    - look up last day of the semester (this will account expiration date, which is captured in the "-e" flag when the script is run)
+    - look up last day of the semester (this is the expiration date, captured in the "-e" flag when the script is run)
     - ensure Informer export column names are consistent with keys in the "row" dict (the script will throw exceptions if not)
 """
 
@@ -19,8 +19,6 @@ import argparse  # docs.python.org/2.7/library/argparse.html
 parser = argparse.ArgumentParser(
     description='Convert exported Informer report into Koha patron import CSV')
 parser.add_argument('file', type=str, help='CSV from Informer')
-parser.add_argument('term', type=str, choices=['F', 'sp', 'Su', 'PC'],
-                    help='Term or season of present semester')
 parser.add_argument('-o', '--out', type=str, default='import.csv',
                     help='Name for output file')
 # hard-coding in Fall 2016 expiration as default
@@ -28,15 +26,14 @@ parser.add_argument('-e', '--expiry', type=str, default='2016-12-16',
                     help='Patron record expiration date in ISO-8601 YYYY-MM-DD format')
 args = parser.parse_args()
 
-# used later to construct notes
+# used for dateenrolled later
 today = datetime.date.today()
-yr = str(today.year)[2:]
 
 # files
 reader = csv.DictReader(open(args.file, 'r'))
 # list of patron fields we must/can populate initially
 # see "koha_starter.csv" for the full list
-fields = ['cardnumber', 'surname', 'firstname', 'othernames', 'email', 'branchcode', 'categorycode', 'patron_attributes', 'dateenrolled', 'dateexpiry', 'userid', 'borrowernotes']
+fields = ['cardnumber', 'surname', 'firstname', 'othernames', 'email', 'branchcode', 'categorycode', 'patron_attributes', 'dateenrolled', 'dateexpiry', 'userid']
 writer = csv.DictWriter(open(args.out, 'w'), fieldnames=fields)
 writer.writeheader()
 
@@ -72,6 +69,9 @@ for row in reader:
             if program in major:
                 patron['patron_attributes'] += ',STUDENTMAJ:' + str(major[program])
                 break
+            else:
+                print('Unrecognized program %s for student %s'
+                % (program, patron['firstname'] + ' ' + patron['surname']))
     else:
         raise Exception("Not pre-college & not a recognizable Academic Level, \
         I don't know what patron category to use!", row)
@@ -86,8 +86,5 @@ for row in reader:
         patron['userid'] = row['ID']
     else:
         patron['userid'] = un
-
-    # note about expiration semester like "F16"
-    patron['borrowernotes'] = args.term + yr
 
     writer.writerow(patron)
