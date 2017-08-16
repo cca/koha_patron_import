@@ -11,10 +11,10 @@ CCA's outline of adding new patrons before the semester:
 Run Informer Report "LIB-EP New Students for ILS Import" & set the Start Term to the upcoming semester. In the CSV export, ensure **Columns Headers** is checked & that the **Multivalue Handler** is "List by comma". Then, on the command line, navigate to the directory with the "create-patron-csv.py" script on it & run:
 
 ```
-python create-patron-csv.py -o output.csv -e 2016-12-14 input.csv F
+python create-patron-csv.py -o output.csv -e 2016-12-14 input.csv
 ```
 
-Where _output.csv_ is the name of the file you want created, _2016-12-14_ is the expiration date for the created patron records, _input.csv_ is the Informer report used as input, & _F_ is the shortened form of the semester's season (one of F, sp, Su, or PC). All of this information is contained in the help flag of create-patron-csv.py; run `python create-patron-csv.py -h`. If your file names have spaces in them, you can wrap them in quotation marks.
+Where _output.csv_ is the name of the file you want created, _2016-12-14_ is the expiration date for the created patron records, & _input.csv_ is the Informer report used as input. All of this information is contained in the help flag of create-patron-csv.py; run `python create-patron-csv.py -h`. If your file names have spaces in them, you can wrap them in quotation marks.
 
 Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
