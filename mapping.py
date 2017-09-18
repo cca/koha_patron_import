@@ -5,6 +5,54 @@ category = {
     'GR': 'GRAD'
 }
 
+# Koha faculty departments, roughly align with CCA divisions
+# set to "None" to leave FACDEPT undefined for a value
+# Values in use (as of 9/2017) are:
+# 1: Architecture, 2: Design, 3: Fine Arts, 4: H&S, Critical Studies
+# 7: Writing & Comics, 10: First Year, a: Administrative, 11: Visual Studies
+# 'b': Other/Special
+fac_depts = {
+    "": None,
+    "All Faculty": None,
+    "Animation": 3,
+    "Architecture": 1,
+    "Ceramics": 3,
+    "Community Arts": 3,
+    "Critical Studies": 4,
+    "Curatorial Practice": 3,
+    "Design MBA": 2,
+    "Diversity Studies": 4,
+    "Fashion": 2,
+    "Film": 3,
+    "Fine Arts": 3,
+    "First Year": 10,
+    "Furniture Design": 2,
+    "Glass": 3,
+    "Grad Comics": 7,
+    "Grad Design": 2,
+    "Graphic Design": 2,
+    "Human Resources": 'a',
+    "Illustration": 2,
+    "Individualized Studies": 3,
+    "Industrial Design": 2,
+    "Interaction Design": 2,
+    "Interdisciplinary": 'b',
+    "Interior Design": 2,
+    "Jewelry/Metal Arts": 3,
+    "Masters of Architecture": 1,
+    "Painting/Drawing": 3,
+    "Photography": 3,
+    "PhotographyAcademic Affairs": 3,
+    "Printmaking":3 ,
+    "Sculpture": 3,
+    "Special Programs": 'b',
+    "Textiles": 3,
+    "Visual Studies": 5,
+    "Visual and Critical Studies": 6,
+    "Writing & Literature": 7,
+    "Writing": 7,
+}
+
 # Codes are configured in Koha's Authorized Values:
 # /cgi-bin/koha/admin/authorised_values.pl
 # formerly known as "PCODE3" in Millennium, "STUDENTMAJ" patron attribute in Koha
