@@ -8,7 +8,7 @@ beginning. Note that a few things should be manually checked:
 
     - ensure mapping (faculty department) hasn't changed (see mapping.py)
     - look up last day of the semester (a week afterwards is the expiration date, captured in the "-e" flag when the script is run)
-    - ensure CSV columns align the `reader_fields`
+    - ensure CSV columns align with the `reader_fields`
 """
 
 import csv  # docs.python.org/2/library/csv.html
