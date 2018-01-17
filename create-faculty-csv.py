@@ -7,7 +7,7 @@ We should run once per semester just prior to the semester's
 beginning. Note that a few things should be manually checked:
 
     - ensure mapping (faculty department) hasn't changed (see mapping.py)
-    - look up last day of the semester (a week afterwards is the expiration date, captured in the "-e" flag when the script is run)
+    - expiration date, captured in the "-e" flag, is a week after the last day of classes for the fall and the last day of May for the spring
     - ensure CSV columns align with the `reader_fields`
 """
 
@@ -22,7 +22,7 @@ parser.add_argument('file', type=str, help='CSV from Informer')
 parser.add_argument('-o', '--out', type=str, default='import.csv',
                     help='Name for output file')
 # hard-coding in Fall 2016 expiration as default
-parser.add_argument('-e', '--expiry', type=str, default='2016-12-16',
+parser.add_argument('-e', '--expiry', type=str, default='2018-05-31',
                     help='Patron record expiration date in ISO-8601 YYYY-MM-DD format')
 args = parser.parse_args()
 
