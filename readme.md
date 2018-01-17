@@ -19,13 +19,17 @@ Where _output.csv_ is the name of the file you want created, _2016-12-14_ is the
 Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
 - Import file is the CSV we just created
-- "Field to use for record matching" is "University ID"
+- "Field to use for record matching" is "Username"
 - We can leave all of the default values blank
 - "If matching record is already in the borrowers table:" should be "Ignore this one, keep the existing one" (the default)
 - Leave "Patron attributes" as is, it is superseded by the above setting
 - Click the **Import** button
 
 After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
+
+## Faculty details
+
+Use the included "faculty.sql" query in the Portal integrations instance to retrieve a list of all faculty teaching this semester (update the `term_id` to the current term). Export the SQL query as a CSV, then trim out all the columns not used in the "create-faculty-csv.py" script as well as the header row. Finally, mimic the rest of the steps from the instructions for students above.
 
 ## Testing
 
