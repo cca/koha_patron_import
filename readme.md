@@ -22,7 +22,7 @@ Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://lib
 - "Field to use for record matching" is "Username"
 - We can leave all of the default values blank
 - "If matching record is already in the borrowers table:" should be "Ignore this one, keep the existing one" (the default)
-- Leave "Patron attributes" as is, it is superseded by the above setting
+- Select "Replace only included patron attributes" below that
 - Click the **Import** button
 
 After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
