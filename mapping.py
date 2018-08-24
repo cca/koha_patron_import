@@ -8,14 +8,17 @@ category = {
 # Koha faculty departments, roughly align with CCA divisions
 # set to "None" to leave FACDEPT undefined for a value
 # Values in use (as of 9/2017) are:
-# 1: Architecture, 2: Design, 3: Fine Arts, 4: H&S, Critical Studies
-# 7: Writing & Comics, 10: First Year, a: Administrative, 11: Visual Studies
-# 'b': Other/Special
+# 1: Architecture, 2: Design, 3: Fine Arts, 4: H&S/Critical Studies,
+# 5: Visual Studies (undergrad), 6: Visual Critical Studies (grad),
+# 7: Writing & Comics, 8: Wattis, 9: CAPL, 10: First Year, a: Administrative,
+# b: Other/Special
 fac_depts = {
     "": None,
+    "Academic Affairs": 'a',
     "All Faculty": None,
     "Animation": 3,
     "Architecture": 1,
+    "Center for Art and Public Life": 9,
     "Ceramics": 3,
     "Community Arts": 3,
     "Critical Studies": 4,
