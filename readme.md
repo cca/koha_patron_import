@@ -29,7 +29,7 @@ After import, Koha informs you exactly how many patrons records were created, ov
 
 ## Faculty details
 
-Use the included "faculty.sql" query in the Portal integrations instance to retrieve a list of all faculty teaching this semester (update the `term_id` to the current term). Export the SQL query as a CSV, then trim out all the columns not used in the "create-faculty-csv.py" script as well as the header row. Finally, mimic the rest of the steps from the instructions for students above.
+Use the included "faculty.sql" query in the Portal integrations instance to retrieve a list of all faculty teaching this semester (update the `term_id` to the current term). Export the SQL query as a CSV, then trim off the header row. Finally, mimic the rest of the steps from the instructions for students above but using the "create-faculty-csv.py" script.
 
 ## Testing
 
