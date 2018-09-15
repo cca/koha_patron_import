@@ -47,6 +47,8 @@ for row in reader:
     patron['surname'] = row['Family Name']
     patron['firstname'] = row['Given Name']
     patron['othernames'] = row['Preferred Name']
+    if row['CCA Email'] == '':
+        raise Exception('TODO: handle empty email values!')
     patron['email'] = row['CCA Email']  # will be empty for pre-college
 
     # everyone defaults to home branch = Oakland
