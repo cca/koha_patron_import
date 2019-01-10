@@ -43,6 +43,7 @@ fac_depts = {
     "Interior Design": 2,
     "Jewelry/Metal Arts": 3,
     "Masters of Architecture": 1,
+    "MDes in Interaction Design": 2,
     "Painting/Drawing": 3,
     "Photography": 3,
     "PhotographyAcademic Affairs": 3,
