@@ -39,6 +39,19 @@ Included is a sample CSV export from Informer which can be used for test runs. A
 - click each patron's link to open their details tab
 - select the **More** button & then **Delete**
 
+## API
+
+Koha has a budding REST API which already has a fully fledged `/patrons` endpoint. We should eventually migrate to creating new patrons via the API rather than CSV upload. You can read some rather sparse documentation at https://library-staff.cca.edu/api/v1/.html
+
+To use the API:
+
+- sign into the Koha staff side, find your patron record, go to **More** > **Manage API Keys**
+- copy the included example.config.json file to config.json
+- insert the client ID and secret into config.json (also edit the `api_root` if need be)
+- run a script similar to add_patron.py (WIP)
+
+It appears that one limitation of the API is that patron attributes cannot be created nor modified. We use this for student major and faculty department so that's a dealbreaker right now.
+
 # LICENSE
 
 [ECL Version 2.0](https://opensource.org/licenses/ECL-2.0)

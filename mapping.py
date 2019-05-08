@@ -2,7 +2,19 @@
 # /cgi-bin/koha/admin/categorie.pl
 category = {
     'UG': 'UNDERGRAD',
-    'GR': 'GRAD'
+    'GR': 'GRAD',
+    "Alumni": "ALUMNI",
+    "Courtesy": "COURTESY",
+    "Faculty": "FACULTY",
+    "Grad Student": "GRAD",
+    "Library Staff": "LIBRARY",
+    "Non-Degree Student": "NONDEGREE",
+    "Special": "SPECIAL",
+    "Special Programs Faculty": "SPECIALFAC",
+    "Special Programs Student": "SPECIALSTU",
+    "Sponsored": "SPONSORED",
+    "Staff": "STAFF",
+    "Undergrad": "UNDERGRAD",
 }
 
 # Koha faculty departments, roughly align with CCA divisions
