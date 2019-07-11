@@ -24,7 +24,7 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 (WIP)
 
-1. Download JSON files...
+1. Download JSON files from Google Cloud to the root of this project. The script expects them to retain their exact names, "student_data.json" and "employee_data.json".
 
 1. Run the script
 
@@ -32,18 +32,19 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 python create-koha-csv.py -e 2019-12-15
 ```
 
-Where _2019-12-15_ is the expiration date for newly created patron records. All of this information is contained in the help flag of create-koha-csv.py; run `python create-koha-csv.py -h`.
+where _2019-12-15_ is the expiration date for newly created patron records.
 
 1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
 - Import file is the CSV we just created
-- "Field to use for record matching" is "Username"
-- We can leave all of the default values blank
-- "If matching record is already in the borrowers table:" should be "Ignore this one, keep the existing one" (the default)
+- **Create a patron list** this can be useful for reversing mistakes
+- **Field to use for record matching** is "Username"
+- Leave all of the default values blank
+- Set **If matching record is already in the borrowers table:** to "Ignore this one, keep the existing one" (the default)
 - Select "Replace only included patron attributes" below that
 - Click the **Import** button
 
-After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
+After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed. Koha doesn't allow duplicate records and checks against two factors: username and the University ID patron attribute.
 
 ## Testing
 
