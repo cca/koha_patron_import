@@ -1,3 +1,10 @@
 data/*
 !data/test.csv
 config.json
+
+# python virtualenv
+bin/
+include/
+lib/
+.Python
+pip-selfcheck.json

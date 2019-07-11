@@ -6,6 +6,18 @@ CCA's outline of adding new patrons before the semester:
 - Use "create-student-csv.py" to convert the Informer output into Koha's CSV schema
 - [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
 
+## Setup
+
+1. Set up a python virtual environment & install dependencies
+
+```sh
+> virtualenv . -p python3
+> source bin/activate # enter virtualenv, do activate.fish for fish shell
+> pip install -r requirements.txt
+```
+
+2. Obtain access to CCA Integrations data in Google Cloud (contact Integration Engineer). There should be JSON files present for employees, students, and courses for the following term.
+
 ## Details
 
 Run Informer Report "LIB-EP New Students for ILS Import" & set the Start Term to the upcoming semester. In the CSV export, ensure **Columns Headers** is checked & that the **Multivalue Handler** is "List by comma". Then, on the command line, navigate to the directory with the "create-student-csv.py" script on it & run:
