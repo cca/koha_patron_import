@@ -2,9 +2,11 @@
 
 CCA's outline of adding new patrons before the semester:
 
-- Run Informer report to get new student list in CSV format
-- Use "create-student-csv.py" to convert the Informer output into Koha's CSV schema
+- Download JSON from "CCA Integrations" Google Cloud
+- Use "create-koha-csv.py" to convert the Informer output into Koha's CSV schema
 - [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
+
+Formerly, we used separate scripts for faculty and student accounts. The data source was also Informer reports (for students) and SQL queries on the Portal database (for faculty), but now we use integrations data straight from Workday.
 
 ## Setup
 
@@ -16,19 +18,23 @@ CCA's outline of adding new patrons before the semester:
 > pip install -r requirements.txt
 ```
 
-2. Obtain access to CCA Integrations data in Google Cloud (contact Integration Engineer). There should be JSON files present for employees, students, and courses for the following term.
+1. Obtain access to CCA Integrations data in Google Cloud (contact Integration Engineer). There should be JSON files present for employees, students, and courses for the following term.
 
 ## Details
 
-Run Informer Report "LIB-EP New Students for ILS Import" & set the Start Term to the upcoming semester. In the CSV export, ensure **Columns Headers** is checked & that the **Multivalue Handler** is "List by comma". Then, on the command line, navigate to the directory with the "create-student-csv.py" script on it & run:
+(WIP)
+
+1. Download JSON files...
+
+1. Run the script
 
 ```
-python create-student-csv.py -o output.csv -e 2016-12-14 input.csv
+python create-koha-csv.py -e 2019-12-15
 ```
 
-Where _output.csv_ is the name of the file you want created, _2016-12-14_ is the expiration date for the created patron records, & _input.csv_ is the Informer report used as input. All of this information is contained in the help flag of create-student-csv.py; run `python create-student-csv.py -h`. If your file names have spaces in them, you can wrap them in quotation marks.
+Where _2019-12-15_ is the expiration date for newly created patron records. All of this information is contained in the help flag of create-koha-csv.py; run `python create-koha-csv.py -h`.
 
-Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
+1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
 - Import file is the CSV we just created
 - "Field to use for record matching" is "Username"
@@ -38,10 +44,6 @@ Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://lib
 - Click the **Import** button
 
 After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
-
-## Faculty details
-
-Use the included "faculty.sql" query in the Portal integrations instance to retrieve a list of all faculty teaching this semester (update the `term_id` to the current term). Export the SQL query as a CSV, then trim off the header row. Finally, mimic the rest of the steps from the instructions for students above but using the "create-faculty-csv.py" script.
 
 ## Testing
 
@@ -53,7 +55,7 @@ Included is a sample CSV export from Informer which can be used for test runs. A
 
 ## API
 
-Koha has a budding REST API which already has a fully fledged `/patrons` endpoint. We should eventually migrate to creating new patrons via the API rather than CSV upload. You can read some rather sparse documentation at https://library-staff.cca.edu/api/v1/.html
+Koha has a budding REST API which already has a fully fledged `/patrons` endpoint. You can read some documentation at https://library-staff.cca.edu/api/v1/.html
 
 To use the API:
 
@@ -62,7 +64,7 @@ To use the API:
 - insert the client ID and secret into config.json (also edit the `api_root` if need be)
 - run a script similar to add_patron.py (WIP)
 
-It appears that one limitation of the API is that patron attributes cannot be created nor modified. We use this for student major and faculty department so that's a dealbreaker right now.
+One limitation of the API is that patron attributes cannot be created nor modified. We use this to record student major and faculty department, so that's a dealbreaker right now. We're also not in a position to fund this development, but it's worth keeping in mind should the situation change.
 
 # LICENSE
 
