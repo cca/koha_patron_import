@@ -4,13 +4,16 @@ This script takes JSON data from Workday and maps it into a format appropriate
 for import into Koha. We run it once per semester just prior to the semester's
 start. Note that a few things should be manually checked:
 
-    - ensure mappings (patron category, student major) haven't changed (see koha_mappings.py)
-    - look up last day of the semester (this is the expiration date, captured in the "-e" flag when the script is run)
+    - ensure mappings (patron category, student major) haven't changed
+        (see koha_mappings.py)
+    - look up last day of the semester (this is the expiration date, captured
+        in the "-e" flag when the script is run)
 """
 import argparse
 import csv
 import datetime
 import json
+import os
 
 from koha_mappings import category, fac_depts, sf_depts, stu_major
 
@@ -21,7 +24,9 @@ parser.add_argument('-e', '--expiry', type=str, default='2019-12-16',
 args = parser.parse_args()
 
 today = datetime.date.today()
-filename = str(today.isoformat()) + '-koha-patrons.csv'
+emp_file = 'employee_data.json'
+stu_file = 'student_data.json'
+out_file = str(today.isoformat()) + '-koha-patrons.csv'
 koha_fields = [ 'branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
 'dateexpiry', 'email', 'firstname', 'patron_attributes', 'surname', 'userid', ]
 
@@ -32,8 +37,9 @@ def make_student_row(student):
         return None
 
     patron = {
-        "branchcode": ('SF' if student["academic_level"] == 'Graduate' or student["primary_program"] in sf_depts else 'OAK'),
-        "categorycode": ('GRAD' if student["academic_level"] == 'Graduate' else 'UNDERGRAD'),
+        "branchcode": ('SF' if student["academic_level"] == 'Graduate'
+            or student["primary_program"] in sf_depts else 'OAK'),
+        "categorycode": category[student["academic_level"]],
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": student["student_id"],
         "dateenrolled": today.isoformat(),
@@ -71,7 +77,8 @@ def make_student_row(student):
 def make_employee_row(person):
     # skip 1) people who are inactive (usually hire date hasn't arrived yet),
     # 2) people w/o emails, 3) the one random record for a student
-    if person["active_status"] == "0" or not person.get("work_email") or person["etype"] == "Students":
+    if (person["active_status"] == "0" or not person.get("work_email")
+        or person["etype"] == "Students"):
         return None
 
     # create a hybrid program/department field
@@ -82,10 +89,11 @@ def make_employee_row(person):
     elif person.get("department"):
         person["prodep"] = person["department"]
 
-    # we assume etype=Instructors => special programs faculty, check this is true
-    if person["etype"] == "Instructors" and person["job_profile"] != "Special Programs Instructor":
-        print('Warning: Instructor {} is not a Special Programs Instructor, check record.'
-            .format(person["username"]))
+    # we assume etype=Instructors => special programs faculty
+    if (person["etype"] == "Instructors"
+        and person["job_profile"] != "Special Programs Instructor"):
+        print('Warning: Instructor {} is not a Special Programs Instructor, \
+        check record.'.format(person["username"]))
 
     patron = {
         "branchcode": ('SF' if person["prodep"] in sf_depts else 'OAK'),
@@ -113,22 +121,27 @@ def make_employee_row(person):
     return patron
 
 print('Adding students to Koha patron CSV.')
-with open('student_data.json', 'r') as student_file:
-    students = json.load(student_file)["Report_Entry"]
-    with open(filename, 'w') as out_file:
-        writer = csv.DictWriter(out_file, fieldnames=koha_fields)
+with open(stu_file, 'r') as file:
+    students = json.load(file)["Report_Entry"]
+    with open(out_file, 'w') as output:
+        writer = csv.DictWriter(output, fieldnames=koha_fields)
         writer.writeheader()
         for student in students:
             row = make_student_row(student)
             if row: writer.writerow(row)
 
 print('Adding Faculty/Staff to Koha patron CSV.')
-with open('employee_data.json', 'r') as employee_file:
-    employees = json.load(employee_file)["Report_Entry"]
-    with open(filename, 'a') as out_file:
-        writer = csv.DictWriter(out_file, fieldnames=koha_fields)
+with open(emp_file, 'r') as file:
+    employees = json.load(file)["Report_Entry"]
+    # open in append mode & don't add header row
+    with open(out_file, 'a') as output:
+        writer = csv.DictWriter(output, fieldnames=koha_fields)
         for employee in employees:
             row = make_employee_row(employee)
             if row: writer.writerow(row)
 
-# @TODO move dated files to "data" dir, open import page in browser?
+print('Done! Upload the CSV at \
+https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
+path = input('Where would you like to archive the data files? (e.g. data/2019FA)')
+for name in [stu_file, emp_file, out_file]:
+    os.renames(name, os.path.join(path, name))

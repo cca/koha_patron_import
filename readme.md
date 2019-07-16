@@ -6,7 +6,7 @@ CCA's outline of adding new patrons before the semester:
 - Use "create-koha-csv.py" to convert the Informer output into Koha's CSV schema
 - [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
 
-Formerly, we used separate scripts for faculty and student accounts. The data source was also Informer reports (for students) and SQL queries on the Portal database (for faculty), but now we use integrations data straight from Workday.
+Formerly, we used separate scripts for faculty and student accounts. The data source was also Informer reports (for students) and SQL queries on the Portal database (for faculty), but now we use integrations data from Workday.
 
 ## Setup
 
@@ -22,17 +22,15 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 ## Details
 
-(WIP)
-
 1. Download JSON files from Google Cloud to the root of this project. The script expects them to retain their exact names, "student_data.json" and "employee_data.json".
 
 1. Run the script
 
 ```
-python create-koha-csv.py -e 2019-12-15
+python create-koha-csv.py -e 2019-12-14
 ```
 
-where _2019-12-15_ is the expiration date for newly created patron records.
+where _2019-12-14_ is the expiration date for newly created patron records.
 
 1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
@@ -44,7 +42,7 @@ where _2019-12-15_ is the expiration date for newly created patron records.
 - Select "Replace only included patron attributes" below that
 - Click the **Import** button
 
-After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed. Koha doesn't allow duplicate records and checks against two factors: username and the University ID patron attribute.
+After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
 
 ## Testing
 
@@ -56,7 +54,7 @@ Included is a sample CSV export from Informer which can be used for test runs. A
 
 ## API
 
-Koha has a budding REST API which already has a fully fledged `/patrons` endpoint. You can read some documentation at https://library-staff.cca.edu/api/v1/.html
+Koha has a budding REST API which already has a well-developed `/patrons` endpoint. You can read some documentation at https://library-staff.cca.edu/api/v1/.html
 
 To use the API:
 
@@ -65,7 +63,7 @@ To use the API:
 - insert the client ID and secret into config.json (also edit the `api_root` if need be)
 - run a script similar to add_patron.py (WIP)
 
-One limitation of the API is that patron attributes cannot be created nor modified. We use this to record student major and faculty department, so that's a dealbreaker right now. We're also not in a position to fund this development, but it's worth keeping in mind should the situation change.
+One limitation of the API is that patron attributes cannot be created nor modified. We use this to record student major and faculty department, so that's a dealbreaker right now. We're not in a position to fund this development, but it's worth keeping in mind should the situation change.
 
 # LICENSE
 
