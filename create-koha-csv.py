@@ -120,28 +120,33 @@ def make_employee_row(person):
 
     return patron
 
-print('Adding students to Koha patron CSV.')
-with open(stu_file, 'r') as file:
-    students = json.load(file)["Report_Entry"]
-    with open(out_file, 'w') as output:
-        writer = csv.DictWriter(output, fieldnames=koha_fields)
-        writer.writeheader()
-        for student in students:
-            row = make_student_row(student)
-            if row: writer.writerow(row)
+if os.path.exists(stu_file):
+    print('Adding students to Koha patron CSV.')
+    with open(stu_file, 'r') as file:
+        students = json.load(file)["Report_Entry"]
+        with open(out_file, 'w') as output:
+            writer = csv.DictWriter(output, fieldnames=koha_fields)
+            writer.writeheader()
+            for student in students:
+                row = make_student_row(student)
+                if row: writer.writerow(row)
 
-print('Adding Faculty/Staff to Koha patron CSV.')
-with open(emp_file, 'r') as file:
-    employees = json.load(file)["Report_Entry"]
-    # open in append mode & don't add header row
-    with open(out_file, 'a') as output:
-        writer = csv.DictWriter(output, fieldnames=koha_fields)
-        for employee in employees:
-            row = make_employee_row(employee)
-            if row: writer.writerow(row)
+if os.path.exists(emp_file):
+    print('Adding Faculty/Staff to Koha patron CSV.')
+    with open(emp_file, 'r') as file:
+        employees = json.load(file)["Report_Entry"]
+        # open in append mode & don't add header row
+        with open(out_file, 'a') as output:
+            writer = csv.DictWriter(output, fieldnames=koha_fields)
+            for employee in employees:
+                row = make_employee_row(employee)
+                if row: writer.writerow(row)
 
 print('Done! Upload the CSV at \
 https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
 path = input('Where would you like to archive the data files? (e.g. data/2019FA)')
-for name in [stu_file, emp_file, out_file]:
-    os.renames(name, os.path.join(path, name))
+if path.strip() != '':
+    for name in [stu_file, emp_file, out_file]:
+        os.renames(name, os.path.join(path, name))
+else:
+    print('Files were not archived.')
