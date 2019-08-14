@@ -46,7 +46,7 @@ def make_student_row(student):
         "dateexpiry": args.expiry,
         "email": student["inst_email"],
         "firstname": student["first_name"],
-        "patron_attributes": "UNIVID:" + student["student_id"],
+        "patron_attributes": "UNIVID:{},STUID:{}".format(student["universal_id"], student["student_id"]),
         "surname": student["last_name"],
         "userid": student["username"],
     }
