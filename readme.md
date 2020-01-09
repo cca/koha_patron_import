@@ -10,12 +10,12 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 ## Setup
 
-1. Set up a python virtual environment & install dependencies
+1. Set up a python virtual environment & install dependencies (requests)
 
 ```sh
-> virtualenv . -p python3
-> source bin/activate # enter virtualenv, do activate.fish for fish shell
-> pip install -r requirements.txt
+> pipenv --three
+> pipenv shell
+> pipenv install
 ```
 
 1. Obtain access to CCA Integrations data in Google Cloud (contact Integration Engineer). There should be JSON files present for employees, students, and courses for the following term.
