@@ -19,8 +19,10 @@ from koha_mappings import category, fac_depts, sf_depts, stu_major
 
 parser = argparse.ArgumentParser(
     description='Convert Workday JSON into Koha patron import CSV')
-parser.add_argument('-e', '--expiry', type=str, default='2019-12-16',
-                    help='Patron record expiration date in YYYY-MM-DD format')
+parser.add_argument('-s', '--student-expiry', type=str, default='2020-05-08',
+                    help='Student record expiration date in YYYY-MM-DD format')
+parser.add_argument('-e', '--employee-expiry', type=str, default='2020-05-31',
+                    help='Employee record expiration date in YYYY-MM-DD format')
 args = parser.parse_args()
 
 today = datetime.date.today()
@@ -43,7 +45,7 @@ def make_student_row(student):
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": student["student_id"],
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args.expiry,
+        "dateexpiry": args.student_expiry,
         "email": student["inst_email"],
         "firstname": student["first_name"],
         "patron_attributes": "UNIVID:{},STUID:{}".format(student["universal_id"], student["student_id"]),
@@ -101,7 +103,7 @@ def make_employee_row(person):
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": person["universal_id"],
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args.expiry,
+        "dateexpiry": args.employee_expiry,
         "email": person["work_email"],
         "firstname": person["first_name"],
         "patron_attributes": "UNIVID:" + person["universal_id"],

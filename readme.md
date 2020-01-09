@@ -27,10 +27,10 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 1. Run the script
 
 ```
-python create-koha-csv.py -e 2019-12-14
+python create-koha-csv.py -s 2020-05-08 -e 2020-05-31
 ```
 
-where _2019-12-14_ is the expiration date for newly created patron records.
+where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
 
 1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
