@@ -12,8 +12,16 @@ with open('config.json', 'r') as f:
 # and we do this to silence printed warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+read_only_patron_fields = ("anonymized", "restricted")
 
-def get_oauth_token():
+
+def remove_readonly_fields(patron):
+    for field in read_only_patron_fields:
+        patron.pop(field, None)
+    return patron
+
+
+def get_token():
     """ Acquire an OAuth token for Koha
 
     returns: OAuth token (string) """
@@ -46,7 +54,7 @@ def name_change(patron_id, name, token=None):
         HTTP exceptions from Requests
     """
     if token is None:
-        token = get_oauth_token()
+        token = get_token()
 
     headers = {
         'Accept': 'application/json',
@@ -56,7 +64,7 @@ def name_change(patron_id, name, token=None):
     r = requests.get(config['api_root'] + '/patrons/{}'.format(str(patron_id)),
         headers=headers, verify=False)
     r.raise_for_status()
-    patron = r.json()
+    patron = remove_readonly_fields(r.json())
 
     # edit name fields
     if name.get("firstname"):
@@ -71,9 +79,12 @@ def name_change(patron_id, name, token=None):
 
 
 if __name__ == '__main__':
-    # library-staff.cca.edu/cgi-bin/koha/members/moremember.pl?borrowernumber=14831
     # "TEST Undergrad" patron
-    r = name_change(14831, {"firstname": "TESTnewname", "surname": "Smith"})
+    # library-staff.cca.edu/cgi-bin/koha/members/moremember.pl?borrowernumber=14831
+    token = get_token()
+    r = name_change(14831, {"firstname": "TESTnewname", "surname": "Smith"}, token)
+    print('Name changed, Koha API response:')
     print(r, r.status_code, r.text)
+    print('Changing name back now...')
     # change it back
-    # name_change(14831, {"firstname": "TEST", "surname": "Undergrad"}, token)
+    name_change(14831, {"firstname": "TEST", "surname": "Undergrad"}, token)
