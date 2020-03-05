@@ -2,3 +2,4 @@ data/*
 !data/koha_starter.csv
 !data/test.csv
 config.json
+config.py
