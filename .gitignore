@@ -2,10 +2,3 @@ data/*
 !data/koha_starter.csv
 !data/test.csv
 config.json
-
-# python virtualenv
-bin/
-include/
-lib/
-.Python
-pip-selfcheck.json
