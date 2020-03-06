@@ -21,7 +21,7 @@ class KohaPatron(SimpleNamespace):
 
     def remove_readonly_fields(self):
         # utility method, we must do this before attempting write API operations
-        patron = self.__dict__
+        patron = self.__dict__.copy()
         for field in PATRON_READ_ONLY_FIELDS:
             patron.pop(field, None)
         return patron
