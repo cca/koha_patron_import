@@ -12,7 +12,7 @@ with open('config.json', 'r') as f:
 # and we do this to silence printed warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-read_only_patron_fields = ("anonymized", "restricted")
+read_only_patron_fields = ("anonymized", "restricted", "updated_on")
 
 
 def remove_readonly_fields(patron):

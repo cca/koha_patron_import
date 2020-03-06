@@ -4,7 +4,7 @@ import config
 from .request_wrapper import request_wrapper
 
 
-PATRON_READ_ONLY_FIELDS = ("anonymized", "restricted")
+PATRON_READ_ONLY_FIELDS = ("anonymized", "restricted", "updated_on")
 
 
 class KohaPatron(SimpleNamespace):
