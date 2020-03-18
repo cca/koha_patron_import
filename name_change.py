@@ -31,7 +31,8 @@ def get_patron(username):
         HTTP exceptions from Requests
     """
     s = request_wrapper()
-    response = s.get('{}/patrons?userid={}'.format(config.api_root, username))
+    # _match parameter can be "contains", "starts_with", "ends_with", or "exact"
+    response = s.get('{}/patrons?userid={}&_match=exact'.format(config.api_root, username))
     # we cannot rfs because sometimes API returns 500 error when it should send an empty array
     # response.raise_for_status()
     data = response.json()
@@ -39,14 +40,6 @@ def get_patron(username):
         print('Errors in Koha API response. It is likely that there is no patron with a "{}" username.'.format(username))
     if len(data) == 1:
         return data[0]
-    elif len(data) > 1:
-        # multiple patrons, look for correct one
-        for patron in data:
-            if patron["userid"] == username:
-                return patron
-        # no one matched exactly
-        print('Multiple patron records were returned for `userid = "{}"` query but none were an exact match.'.format(username))
-        return None
     else:
         # => len(response.json()) == 0
         print('No patron with username "{}".'.format(username))
