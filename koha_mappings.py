@@ -27,6 +27,8 @@ fac_depts = {
     "Ceramics": 3,
     "Communications": "a",
     "Community Arts": 3,
+    # 2020 Div Studies -> CES
+    "Critical Ethnic Studies": 4,
     "Critical Studies": 4,
     "Curatorial Practice": 3,
     "Design": 2,
