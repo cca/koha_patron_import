@@ -132,13 +132,13 @@ stu_major = {
     "Architecture": 2,
     "Ceramics": 3,
     "Community Arts": 4,
+    # this one's a toss-up, putting it with MFA Design for now
+    "Dual Degree: Graduate Design/Design Strategy": 24,
     # dual-degree programs for grad students
     # we arbitrarily choose to capture the non-VCS side of the degree for now
     "Dual Degree: Graduate Visual and Critical Studies/Curatorial Practice": 17,
     "Dual Degree: Graduate Visual and Critical Studies/Fine Arts": 26,
     "Dual Degree: Graduate Visual and Critical Studies/Writing": 27,
-    # this one's a toss-up, putting it with MFA Design for now
-    "Dual Degree: Graduate Design/Design Strategy": 24,
     "Fashion Design": 5,
     "Film": 6,
     "Furniture": 7,
@@ -156,6 +156,7 @@ stu_major = {
     "Graduate Visual and Critical Studies": 18,
     "Graduate Writing": 27,
     "Graphic Design": 9,
+    "History of Art and Visual Culture": 34,
     "Illustration": 10,
     "Individualized": 11,
     "Industrial Design": 12,
@@ -164,12 +165,14 @@ stu_major = {
     "Jewelry and Metal Arts": 15,
     "Painting and Drawing": 28,
     "Photography": 29,
-    # right now Portal still uses "Printmaking" but I'm assuming this will change soon
+    # Printmaking -> Printmedia 2019
     "Printmaking": 30,
+    "Printmedia": 30,
     "Printmedia": 30,
     "Sculpture": 31,
     "Textiles": 32,
     "Undeclared, UG": 33,
+    # defunct, VS is now "History of Art and Visual Culture" 2020-08
     "Visual Studies": 34,
     "Writing and Literature": 35,
 }

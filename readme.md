@@ -24,15 +24,22 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 1. Download JSON files from Google Cloud to the root of this project. The script expects them to retain their exact names, "student_data.json" and "employee_data.json".
 
-1. Run the script
+2. Check that there are no new student majors not represented in "koha_mappings.py". One way I do this is to write the list of all majors to a text file and diff it against previous iterations:
+
+```sh
+> jq '.Report_Entry[].primary_program' data/2020-08-25-student_data.json | sort | uniq > data/2020-primary-programs.txt
+> diff data/2019-primary-programs.txt data/2020-primary-programs.txt
+```
+
+3. Run the script
 
 ```
-python create-koha-csv.py -s 2020-05-08 -e 2020-05-31
+> python create-koha-csv.py -s 2020-05-08 -e 2020-05-31
 ```
 
 where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
 
-1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
+4. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
 - Import file is the CSV we just created
 - **Create a patron list** this can be useful for reversing mistakes
