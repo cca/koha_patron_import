@@ -10,46 +10,29 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 ## Setup
 
-1. Set up a python virtual environment & install dependencies (requests)
+1. Set up a python virtual environment & install dependencies: `pipenv --three && pipenv shell
+&& pipenv install`
 
-```sh
-> pipenv --three
-> pipenv shell
-> pipenv install
-```
-
-1. Obtain access to CCA Integrations data in Google Cloud (contact Integration Engineer). There should be JSON files present for employees, students, and courses for the following term.
+1. Obtain access to CCA Integrations data in Google Cloud (contact the Integration Engineer). There should be JSON files present for employees, students, and courses for recent terms.
 
 ## Details
 
-1. Download JSON files from Google Cloud to the root of this project. The script expects them to retain their exact names, "student_data.json" and "employee_data.json".
+1. Download JSON files from Google Cloud to the root of this project. The script expects them to retain their names, "student_data.json" and "employee_data.json".
 
-2. Check that there are no new student majors not represented in "koha_mappings.py". One way I do this is to write the list of all majors to a text file and diff it against previous iterations:
+1. Check that there are no new student majors not represented in "koha_mappings.py". I wrote a shell script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) to parse the employee/student data and write all major/department values to text files in the data directory. You can diff the results of this against its last iteration to find any new or modified values.
 
-```sh
-> jq '.Report_Entry[].primary_program' data/2020-08-25-student_data.json | sort | uniq > data/2020-primary-programs.txt
-> diff data/2019-primary-programs.txt data/2020-primary-programs.txt
-```
+1. Run the main script `python create-koha-csv.py -s 2020-05-08 -e 2020-05-31` where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
 
-3. Run the script
+1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
-```
-> python create-koha-csv.py -s 2020-05-08 -e 2020-05-31
-```
+    - Import file is the CSV we just created
+    - **Create a patron list** this can be useful for reversing mistakes
+    - **Field to use for record matching** is "Username"
+    - Leave all of the default values blank
+    - We want **If matching record is already in the borrowers table:** to be "Ignore this one, keep the existing one" and "Replace only included patron attributes" below that. These should be the defaults.
+    - Click the **Import** button
 
-where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
-
-4. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
-
-- Import file is the CSV we just created
-- **Create a patron list** this can be useful for reversing mistakes
-- **Field to use for record matching** is "Username"
-- Leave all of the default values blank
-- Set **If matching record is already in the borrowers table:** to "Ignore this one, keep the existing one" (the default)
-- Select "Replace only included patron attributes" below that
-- Click the **Import** button
-
-After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed.
+After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed. You can copy the full text output of this page and save it into the data directory.
 
 ## Testing
 
