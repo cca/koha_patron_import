@@ -146,7 +146,7 @@ if os.path.exists(emp_file):
 
 print('Done! Upload the CSV at \
 https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
-path = input('Where would you like to archive the data files? (e.g. data/2019FA)')
+path = input('Where would you like to archive the data files? (e.g. data/2019FA) ')
 if path.strip() != '':
     for name in [stu_file, emp_file, out_file]:
         os.renames(name, os.path.join(path, name))
