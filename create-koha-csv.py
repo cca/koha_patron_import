@@ -148,6 +148,14 @@ print('Done! Upload the CSV at \
 https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
 path = input('Where would you like to archive the data files? (e.g. data/2019FA) ')
 if path.strip() != '':
+    # ensure directory exists
+    if not os.path.isdir(path):
+        try:
+            os.mkdir(path)
+        except:
+            print('Error: unable to create directory at path "{}"'.format(path))
+            exit(1)
+
     for name in [stu_file, emp_file, out_file]:
         os.renames(name, os.path.join(path, name))
 else:
