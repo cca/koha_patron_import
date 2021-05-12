@@ -47,6 +47,7 @@ fac_depts = {
     "Grad Comics": 7,
     "Grad Design": 2,
     "Graphic Design": 2,
+    "History of Art and Visual Culture": 5, # formerly Visual Studies
     "Humanities and Sciences": 4,
     "Human Resources": "a",
     "Illustration": 2,
@@ -75,7 +76,6 @@ fac_depts = {
     "Studio Managers": "a",
     "Textiles": 3,
     "Visual and Critical Studies": 6,
-    "Visual Studies": 5,
     "Wattis Institute": 8,
     "Writing": 7,
     "Writing & Literature": 7,
@@ -127,7 +127,7 @@ sf_depts = [
 ]
 
 # Codes are configured in Koha's Authorized Values:
-# /cgi-bin/koha/admin/authorised_values.pl
+# https://library-staff.cca.edu//cgi-bin/koha/admin/authorised_values.pl
 # formerly known as "PCODE3" in Millennium, "STUDENTMAJ" patron attribute in Koha
 stu_major = {
     "Animation": 1,
@@ -144,6 +144,7 @@ stu_major = {
     "Fashion Design": 5,
     "Film": 6,
     "Furniture": 7,
+    "Game Arts": 39,
     "Glass": 8,
     "Graduate Advanced Architectural Design": 19,
     "Graduate Architecture": 16,
@@ -160,7 +161,7 @@ stu_major = {
     "Graphic Design": 9,
     "History of Art and Visual Culture": 34,
     "Illustration": 10,
-    "Individualized": 11,
+    "Individualized Studies": 11,
     "Industrial Design": 12,
     "Interaction Design": 13,
     "Interior Design": 14,
