@@ -35,7 +35,8 @@ koha_fields = [ 'branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
 
 def make_student_row(student):
     # some students don't have CCA emails, skip them
-    if student.get("inst_email") is None:
+    # one student record in Summer 2021 lacked a last_name
+    if student.get("inst_email") is None or student.get("last_name") is None:
         return None
 
     patron = {
@@ -94,8 +95,8 @@ def make_employee_row(person):
     # we assume etype=Instructors => special programs faculty
     if (person["etype"] == "Instructors"
         and person["job_profile"] != "Special Programs Instructor"):
-        print('Warning: Instructor {} is not a Special Programs Instructor, \
-        check record.'.format(person["username"]))
+        print(('Warning: Instructor {} is not a Special Programs Instructor, '
+        'check record.').format(person["username"]))
 
     patron = {
         "branchcode": ('SF' if person["prodep"] in sf_depts else 'OAK'),
