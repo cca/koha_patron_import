@@ -92,13 +92,16 @@ def make_employee_row(person):
         person["prodep"] = person["program"]
     elif person.get("department"):
         person["prodep"] = person["department"]
+    elif person["job_profile"] in fac_depts:
+        person["prodep"] = person["job_profile"]
 
     # skip inactive special programs faculty
     if person["job_profile"] == "Special Programs Instructor (inactive)":
         return None
     # we assume etype=Instructors => special programs faculty
     if (person["etype"] == "Instructors"
-        and person["job_profile"] != "Special Programs Instructor"):
+        and person["job_profile"] != "Special Programs Instructor"
+        and person["job_profile"] not in fac_depts):
         print(('Warning: Instructor {} is not a Special Programs Instructor, '
         'check record.').format(person["username"]))
 
@@ -126,6 +129,8 @@ def make_employee_row(person):
         "{}", see patron {}""".format(person["prodep"], person["username"]))
 
     if person["prodep"] is None:
+        print('Warning: employee {} has no academic program or department:'
+            .format(person["username"]))
         print(person)
 
     return patron
