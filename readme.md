@@ -3,7 +3,7 @@
 CCA's outline of adding new patrons before the semester:
 
 - Download JSON from "CCA Integrations" Google Cloud
-- Use "create-koha-csv.py" to convert the Informer output into Koha's CSV schema
+- Use "create_koha_csv.py" to convert the Informer output into Koha's CSV schema
 - [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
 
 Formerly, we used separate scripts for faculty and student accounts. The data source was also Informer reports (for students) and SQL queries on the Portal database (for faculty), but now we use integrations data from Workday.
@@ -21,7 +21,7 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". I wrote a shell script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) to parse the employee/student data and write all major/department values to text files in the data directory. You can diff the results of this against its last iteration to find any new or modified values.
 
-1. Run the main script `python create-koha-csv.py -s 2020-05-08 -e 2020-05-31` where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
+1. Run the main script `python create_koha_csv.py -s 2020-05-08 -e 2020-05-31` where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
 
 1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
