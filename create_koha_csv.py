@@ -81,8 +81,7 @@ def make_student_row(student):
 def make_employee_row(person):
     # skip 1) people who are inactive (usually hire date hasn't arrived yet),
     # 2) people w/o emails, 3) the one random record for a student
-    if (person["active_status"] == "0" or not person.get("work_email")
-        or person["etype"] == "Students"):
+    if (person["active_status"] == "0" or not person.get("work_email") or person["etype"] == "Students"):
         return None
 
     # create a hybrid program/department field
@@ -99,11 +98,9 @@ def make_employee_row(person):
     if person["job_profile"] == "Special Programs Instructor (inactive)":
         return None
     # we assume etype=Instructors => special programs faculty
-    if (person["etype"] == "Instructors"
-        and person["job_profile"] != "Special Programs Instructor"
-        and person["job_profile"] not in fac_depts):
+    if (person["etype"] == "Instructors" and person["job_profile"] != "Special Programs Instructor" and person["job_profile"] not in fac_depts):
         print(('Warning: Instructor {} is not a Special Programs Instructor, '
-        'check record.').format(person["username"]))
+               'check record.').format(person["username"]))
 
     patron = {
         "branchcode": ('SF' if person["prodep"] in sf_depts else 'OAK'),
@@ -130,10 +127,11 @@ def make_employee_row(person):
 
     if person["prodep"] is None:
         print('Warning: employee {} has no academic program or department:'
-            .format(person["username"]))
+              .format(person["username"]))
         print(person)
 
     return patron
+
 
 if os.path.exists(STU_FILE):
     print('Adding students to Koha patron CSV.')
@@ -167,7 +165,7 @@ if path.strip() != '':
     if not os.path.isdir(path):
         try:
             os.mkdir(path)
-        except:
+        except PermissionError:
             print('Error: unable to create directory at path "{}"'.format(path))
             exit(1)
 
