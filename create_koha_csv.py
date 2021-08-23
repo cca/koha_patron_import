@@ -15,7 +15,7 @@ import datetime
 import json
 import os
 
-from koha_mappings import category, fac_depts, sf_depts, stu_major
+from koha_mappings import category, fac_depts, stu_major
 
 parser = argparse.ArgumentParser(
     description='Convert Workday JSON into Koha patron import CSV')
@@ -32,6 +32,23 @@ OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
 koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
                'dateexpiry', 'email', 'firstname', 'patron_attributes',
                'surname', 'userid', ]
+
+
+def create_prox_map(proxfile):
+    # Prox report CSV is invalid with a title line & an empty line
+    strip_first_n_lines(proxfile, 2)
+
+
+def strip_first_n_lines(filename, n=0):
+    index = 0
+    with open(filename, 'r+') as fh:
+        while index < n:
+            fh.readline()
+            index += 1
+        data = fh.read()
+        fh.seek(0)
+        fh.write(data)
+        fh.truncate()
 
 
 def make_student_row(student):
@@ -103,7 +120,7 @@ def make_employee_row(person):
                'check record.').format(person["username"]))
 
     patron = {
-        "branchcode": ('SF' if person["prodep"] in sf_depts else 'OAK'),
+        "branchcode": 'SF',
         "categorycode": category[person["etype"]],
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": person["universal_id"],
