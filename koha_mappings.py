@@ -27,6 +27,7 @@ fac_depts = {
     "Ceramics": 3,
     "Communications": "a",
     "Community Arts": 3,
+    "Creative Instructional Technologies": "a",
     # 2020 Div Studies -> CES
     "Critical Ethnic Studies": 4,
     "Critical Studies": 4,
@@ -34,7 +35,8 @@ fac_depts = {
     "Design": 2,
     "Design MBA": 2,
     "Diversity Studies": 4,
-    "Educational Technology Services": "a",
+    # defunct as of Fall 2021
+    # "Educational Technology Services": "a",
     "Enrollment Services": "a",
     "Extension Instructor": "b",
     "Facilities": "a",
@@ -48,7 +50,7 @@ fac_depts = {
     "Grad Comics": 7,
     "Grad Design": 2,
     "Graphic Design": 2,
-    "History of Art and Visual Culture": 5, # formerly Visual Studies
+    "History of Art and Visual Culture": 5,  # formerly Visual Studies
     "Humanities and Sciences": 4,
     "Human Resources": "a",
     "Illustration": 2,
@@ -61,13 +63,14 @@ fac_depts = {
     "Libraries": "a",
     "Masters of Architecture": 1,
     "MDes in Interaction Design": 2,
+    "Office of the CIO": "a",
     "Office of the President": "a",
     "Operations": "a",
     "Painting/Drawing": 3,
     "Photography": 3,
     "PhotographyAcademic Affairs": 3,
     "Pre-College Instructor": "b",
-    "Printmedia": 3, # formerly Printmaking
+    "Printmedia": 3,  # formerly Printmaking
     "Public Safety": "a",
     "Purchasing": "a",
     "Sculpture": 3,
@@ -75,58 +78,14 @@ fac_depts = {
     "Special Programs": "b",
     "Student Affairs": "a",
     "Student Records": "a",
-    "Studio Managers": "a",
+    "Studio Operations": "a",  # renamed from Studio Managers, Fall 2021
+    "Technology Services": "a",  # replaced ETS in Fall 2021
     "Textiles": 3,
     "Visual and Critical Studies": 6,
     "Wattis Institute": 8,
     "Writing": 7,
     "Writing & Literature": 7,
 }
-
-# these departments/programs are based in SF, used to set homebranch to SF
-sf_depts = [
-    "Academic Affairs",
-    "Advancement",
-    "Architecture",
-    "Business Office",
-    "Communications",
-    "Curatorial Practice",
-    "Design",
-    "Design MBA",
-    "Dual Degree: Graduate Design/Design Strategy",
-    "Dual Degree: Graduate Visual and Critical Studies/Curatorial Practice",
-    "Dual Degree: Graduate Visual and Critical Studies/Fine Arts",
-    "Dual Degree: Graduate Visual and Critical Studies/Writing",
-    "Educational Technology Services",
-    "Enrollment Services",
-    "Fashion Design",
-    "Film",
-    "Financial Aid Office",
-    "Graduate Advanced Architectural Design",
-    "Graduate Architecture",
-    "Graduate Comics",
-    "Graduate Curatorial Practice",
-    "Graduate Design (2 year)",
-    "Graduate Design (3 year)",
-    "Graduate Design Strategy",
-    "Graduate Film",
-    "Graduate Fine Arts",
-    "Graduate Interaction Design",
-    "Graduate Visual and Critical Studies",
-    "Graduate Writing",
-    "Grad Comics",
-    "Grad Design",
-    "Graphic Design",
-    "Illustration",
-    "Industrial Design",
-    "Interaction Design",
-    "Interior Design",
-    "Masters of Architecture",
-    "MDes in Interaction Design",
-    "Office of the President",
-    "Operations",
-    "Visual and Critical Studies",
-]
 
 # Codes are configured in Koha's Authorized Values:
 # https://library-staff.cca.edu//cgi-bin/koha/admin/authorised_values.pl
