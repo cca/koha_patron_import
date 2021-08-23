@@ -29,8 +29,9 @@ today = datetime.date.today()
 EMP_FILE = 'employee_data.json'
 STU_FILE = 'student_data.json'
 OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
-koha_fields = [ 'branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
-'dateexpiry', 'email', 'firstname', 'patron_attributes', 'surname', 'userid', ]
+koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
+               'dateexpiry', 'email', 'firstname', 'patron_attributes',
+               'surname', 'userid', ]
 
 
 def make_student_row(student):
@@ -40,8 +41,7 @@ def make_student_row(student):
         return None
 
     patron = {
-        "branchcode": ('SF' if student["academic_level"] == 'Graduate'
-            or student["primary_program"] in sf_depts else 'OAK'),
+        "branchcode": 'SF',
         "categorycode": category[student["academic_level"]],
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": student["student_id"],
