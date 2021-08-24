@@ -63,6 +63,7 @@ def make_student_row(student):
         "firstname": student["first_name"],
         "patron_attributes": "UNIVID:{},STUID:{}".format(
             student["universal_id"], student["student_id"]),
+        "phone": student.get("phone", ''),
         "surname": student["last_name"],
         "userid": student["username"],
     }
@@ -171,6 +172,7 @@ def make_employee_row(person):
         "email": person["work_email"],
         "firstname": person["first_name"],
         "patron_attributes": "UNIVID:" + person["universal_id"],
+        "phone": person.get("phone", ''),
         "surname": person["last_name"],
         "userid": person["username"],
     }
