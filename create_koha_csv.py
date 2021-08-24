@@ -33,8 +33,9 @@ def strip_first_n_lines(filename, n=0):
 
 
 def create_prox_map(proxfile):
-    # Prox report CSV is invalid with a title line & an empty line
-    strip_first_n_lines(proxfile, 2)
+    # Prox report CSV is invalid with a title line & an empty line, we strip
+    # the header row too or else conversion to int() below breaks
+    strip_first_n_lines(proxfile, 3)
     with open(proxfile, mode='r') as infile:
         reader = csv.reader(infile)
         # Universal ID => prox number mapping
@@ -117,9 +118,9 @@ def expirationDate(person):
         type = 'Staff'
     d = date.fromisoformat(args.semester_end)
     if type == 'Staff' or type == 'Instructors':
-        # tricky but we're going to _a day before the first day of the next
-        # month_ to figure out the last day of the given month
-        return str(d.replace(month=(d.month + 1) % 12, day=1) - timedelta(days=1))
+        # go into next month then subtract the number of days from next month
+        next_mo = d.replace(day=28) + timedelta(days=4)
+        return str(next_mo - timedelta(days=next_mo.day))
     else:
         # implies faculty
         # Spring => May 31
@@ -234,7 +235,7 @@ def main():
     https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
     path = input('Where would you like to archive the data files? (e.g. '
                  'data/2019FA) ')
-    if path.strip() != '':
+    if path.strip() != '' and path.strip().lower() != 'n':
         # ensure directory exists
         if not os.path.isdir(path):
             try:
