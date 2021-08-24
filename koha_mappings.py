@@ -85,6 +85,7 @@ fac_depts = {
     "Wattis Institute": 8,
     "Writing": 7,
     "Writing & Literature": 7,
+    "YASP Instructor": "b",
 }
 
 # Codes are configured in Koha's Authorized Values:

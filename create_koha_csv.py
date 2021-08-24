@@ -17,30 +17,7 @@ import os
 
 from koha_mappings import category, fac_depts, stu_major
 
-parser = argparse.ArgumentParser(
-    description='Convert Workday JSON into Koha patron import CSV')
-parser.add_argument('-s', '--semester-end', type=str, required=True,
-                    help='Last day of the semester in YYYY-MM-DD format')
-args = parser.parse_args()
-
 today = date.today()
-EMP_FILE = 'employee_data.json'
-STU_FILE = 'student_data.json'
-PROX_FILE = 'prox.csv'
-OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
-koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
-               'dateexpiry', 'email', 'firstname', 'patron_attributes',
-               'surname', 'userid', ]
-
-
-def create_prox_map(proxfile=PROX_FILE):
-    # Prox report CSV is invalid with a title line & an empty line
-    strip_first_n_lines(proxfile, 2)
-    with open(proxfile, mode='r') as infile:
-        reader = csv.reader(infile)
-        # Universal ID => prox number mapping
-        map = {rows[0]: rows[1] for rows in reader}
-        return map
 
 
 def strip_first_n_lines(filename, n=0):
@@ -53,6 +30,16 @@ def strip_first_n_lines(filename, n=0):
         fh.seek(0)
         fh.write(data)
         fh.truncate()
+
+
+def create_prox_map(proxfile):
+    # Prox report CSV is invalid with a title line & an empty line
+    strip_first_n_lines(proxfile, 2)
+    with open(proxfile, mode='r') as infile:
+        reader = csv.reader(infile)
+        # Universal ID => prox number mapping
+        map = {rows[0]: rows[1] for rows in reader}
+        return map
 
 
 def make_student_row(student):
@@ -121,7 +108,7 @@ def expirationDate(person):
     # an etype but _do_ have a "future_etype".
     type = person.get('etype') or person.get('etype_future')
     if not type:
-        print(('Warning: employee {} does not have an etype nor a future_etype.'
+        print(('Warning: employee {} does not have an etype nor a etype_future.'
                ' They will be assigned the Staff expiration date.'
                .format(person["username"])))
         type = 'Staff'
@@ -200,43 +187,67 @@ def make_employee_row(person):
     return patron
 
 
-if os.path.exists(STU_FILE):
-    print('Adding students to Koha patron CSV.')
-    with open(STU_FILE, 'r') as file:
-        students = json.load(file)["Report_Entry"]
-        with open(OUT_FILE, 'w') as output:
-            writer = csv.DictWriter(output, fieldnames=koha_fields)
-            writer.writeheader()
-            for stu in students:
-                row = make_student_row(stu)
-                if row:
-                    writer.writerow(row)
+def main():
+    EMP_FILE = 'employee_data.json'
+    STU_FILE = 'student_data.json'
+    PROX_FILE = 'prox.csv'
+    for file in [EMP_FILE, STU_FILE, PROX_FILE]:
+        if not os.path.exists(file):
+            raise Exception('Expected to find file "{}" in project root.'
+                            .format(file))
 
-if os.path.exists(EMP_FILE):
-    print('Adding Faculty/Staff to Koha patron CSV.')
-    with open(EMP_FILE, 'r') as file:
-        employees = json.load(file)["Report_Entry"]
-        # open in append mode & don't add header row
-        with open(OUT_FILE, 'a') as output:
-            writer = csv.DictWriter(output, fieldnames=koha_fields)
-            for employee in employees:
-                row = make_employee_row(employee)
-                if row:
-                    writer.writerow(row)
+    OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
+    koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
+                   'dateexpiry', 'email', 'firstname', 'patron_attributes',
+                   'surname', 'userid', ]
 
-print('Done! Upload the CSV at \
-https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
-path = input('Where would you like to archive the data files? (e.g. data/2019FA) ')
-if path.strip() != '':
-    # ensure directory exists
-    if not os.path.isdir(path):
-        try:
-            os.mkdir(path)
-        except PermissionError:
-            print('Error: unable to create directory at path "{}"'.format(path))
-            exit(1)
+    if os.path.exists(STU_FILE):
+        print('Adding students to Koha patron CSV.')
+        with open(STU_FILE, 'r') as file:
+            students = json.load(file)["Report_Entry"]
+            with open(OUT_FILE, 'w') as output:
+                writer = csv.DictWriter(output, fieldnames=koha_fields)
+                writer.writeheader()
+                for stu in students:
+                    row = make_student_row(stu)
+                    if row:
+                        writer.writerow(row)
 
-    for name in [STU_FILE, EMP_FILE, PROX_FILE, OUT_FILE]:
-        os.renames(name, os.path.join(path, name))
-else:
-    print('Files were not archived.')
+    if os.path.exists(EMP_FILE):
+        print('Adding Faculty/Staff to Koha patron CSV.')
+        with open(EMP_FILE, 'r') as file:
+            employees = json.load(file)["Report_Entry"]
+            # open in append mode & don't add header row
+            with open(OUT_FILE, 'a') as output:
+                writer = csv.DictWriter(output, fieldnames=koha_fields)
+                for employee in employees:
+                    row = make_employee_row(employee)
+                    if row:
+                        writer.writerow(row)
+
+    print('Done! Upload the CSV at \
+    https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
+    path = input('Where would you like to archive the data files? (e.g. '
+                 'data/2019FA) ')
+    if path.strip() != '':
+        # ensure directory exists
+        if not os.path.isdir(path):
+            try:
+                os.mkdir(path)
+            except PermissionError:
+                print('Unable to create directory at path "{}".'.format(path))
+                exit(1)
+
+        for name in [STU_FILE, EMP_FILE, PROX_FILE, OUT_FILE]:
+            os.renames(name, os.path.join(path, name))
+    else:
+        print('Files were not archived.')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Convert Workday JSON into Koha patron import CSV')
+    parser.add_argument('-s', '--semester-end', type=str, required=True,
+                        help='Last day of the semester in YYYY-MM-DD format')
+    args = parser.parse_args()
+    main()
