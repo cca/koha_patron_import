@@ -17,11 +17,11 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 ## Details
 
-1. Download JSON files from Google Cloud to the root of this project. The script expects them to retain their names, "student_data.json" and "employee_data.json".
+1. Download JSON files from Google Cloud to the root of this project e.g. `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. The script expects them to retain their names, "student_data.json" and "employee_data.json". Download the report of "Prox" (ID card) numbers and save it as "prox.csv" in the root of this project.
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". I wrote a shell script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) to parse the employee/student data and write all major/department values to text files in the data directory. You can diff the results of this against its last iteration to find any new or modified values.
 
-1. Run the main script `python create_koha_csv.py -s 2020-05-08 -e 2020-05-31` where the `-s` parameter is the expiration date for student records and `-e` is the one for employees.
+1. Run the main script `python create_koha_csv.py -s 2021-12-14` where the `-s` parameter is the last day of the semester. The due dates for all account types (staff, student, faculty) are calculated based on this date.
 
 1. Inside Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 

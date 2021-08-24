@@ -5,13 +5,13 @@ for import into Koha. We run it once per semester just prior to the semester's
 start. Note that a few things should be manually checked:
 
     - ensure mappings (patron category, student major) haven't changed
-        (see koha_mappings.py)
+        (see koha_mappings.py and new-programs.sh)
     - look up last day of the semester (this is the expiration date, captured
-        in the "-e" flag when the script is run)
+        in the "-s" flag when the script is run)
 """
 import argparse
 import csv
-import datetime
+from datetime import date, timedelta
 import json
 import os
 
@@ -19,24 +19,28 @@ from koha_mappings import category, fac_depts, stu_major
 
 parser = argparse.ArgumentParser(
     description='Convert Workday JSON into Koha patron import CSV')
-parser.add_argument('-s', '--student-expiry', type=str, default='2020-05-08',
-                    help='Student record expiration date in YYYY-MM-DD format')
-parser.add_argument('-e', '--employee-expiry', type=str, default='2020-05-31',
-                    help='Employee record expiration date in YYYY-MM-DD format')
+parser.add_argument('-s', '--semester-end', type=str, required=True,
+                    help='Last day of the semester in YYYY-MM-DD format')
 args = parser.parse_args()
 
-today = datetime.date.today()
+today = date.today()
 EMP_FILE = 'employee_data.json'
 STU_FILE = 'student_data.json'
+PROX_FILE = 'prox.csv'
 OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
 koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
                'dateexpiry', 'email', 'firstname', 'patron_attributes',
                'surname', 'userid', ]
 
 
-def create_prox_map(proxfile):
+def create_prox_map(proxfile=PROX_FILE):
     # Prox report CSV is invalid with a title line & an empty line
     strip_first_n_lines(proxfile, 2)
+    with open(proxfile, mode='r') as infile:
+        reader = csv.reader(infile)
+        # Universal ID => prox number mapping
+        map = {rows[0]: rows[1] for rows in reader}
+        return map
 
 
 def strip_first_n_lines(filename, n=0):
@@ -63,7 +67,7 @@ def make_student_row(student):
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": student["student_id"],
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args.student_expiry,
+        "dateexpiry": args.semester_end,
         "email": student["inst_email"],
         "firstname": student["first_name"],
         "patron_attributes": "UNIVID:{},STUID:{}".format(
@@ -93,6 +97,51 @@ def make_student_row(student):
         ))
 
     return patron
+
+
+def expirationDate(person):
+    """Calculate patron expiration date based on personnel data and the last
+    day of the semester.
+
+    Parameters
+    ----------
+    person : dict
+        Dict of user data. "etype" and "future_etype" are most important here.
+
+    Returns
+    -------
+    str (in YYYY-MM-DD format)
+        The appropriate expiration date as an ISO-8601 date string. For faculty
+        added during Fall, this is Jan 31 of the next year. For faculty added
+        during Spring, this is May 31 of the current year. For staff, it is the
+        last day of the last month of the impending semester.
+
+    """
+    # there are 3 etypes: Staff, Instructors, Faculty. Sometimes we do not have
+    # an etype but _do_ have a "future_etype".
+    type = person.get('etype') or person.get('etype_future')
+    if not type:
+        print(('Warning: employee {} does not have an etype nor a future_etype.'
+               ' They will be assigned the Staff expiration date.'
+               .format(person["username"])))
+        type = 'Staff'
+    d = date.fromisoformat(args.semester_end)
+    if type == 'Staff' or type == 'Instructors':
+        # tricky but we're going to _a day before the first day of the next
+        # month_ to figure out the last day of the given month
+        return str(d.replace(month=(d.month + 1) % 12, day=1) - timedelta(days=1))
+    else:
+        # implies faculty
+        # Spring => May 31
+        if d.month == 5:
+            return str(d.replace(day=31))
+        # Fall => Jan 31 of the following year
+        if d.month == 12:
+            return str(d.replace(year=d.year + 1, month=1, day=31))
+        # @TODO how do we handle Summer?
+        else:
+            raise Exception('Summer expiration dates for faculty not implemented yet.')
+    pass
 
 
 def make_employee_row(person):
@@ -125,7 +174,8 @@ def make_employee_row(person):
         # patrons don't have a barcode yet, fill in university ID
         "cardnumber": person["universal_id"],
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args.employee_expiry,
+        # @TODO this date varies by categorycode now
+        "dateexpiry": expirationDate(person),
         "email": person["work_email"],
         "firstname": person["first_name"],
         "patron_attributes": "UNIVID:" + person["universal_id"],
@@ -186,7 +236,7 @@ if path.strip() != '':
             print('Error: unable to create directory at path "{}"'.format(path))
             exit(1)
 
-    for name in [STU_FILE, EMP_FILE, OUT_FILE]:
+    for name in [STU_FILE, EMP_FILE, PROX_FILE, OUT_FILE]:
         os.renames(name, os.path.join(path, name))
 else:
     print('Files were not archived.')
