@@ -38,7 +38,9 @@ def create_prox_map(proxfile):
     with open(proxfile, mode='r') as infile:
         reader = csv.reader(infile)
         # Universal ID => prox number mapping
-        map = {rows[0]: rows[1] for rows in reader}
+        # Prox report Univ IDs have varying number of leading zeroes e.g.
+        # "001000001", "010000001", so we strip by casting to int & back to str
+        map = {str(int(rows[0])): rows[1] for rows in reader if int(rows[1]) != 0}
         return map
 
 
@@ -51,8 +53,9 @@ def make_student_row(student):
     patron = {
         "branchcode": 'SF',
         "categorycode": category[student["academic_level"]],
-        # patrons don't have a barcode yet, fill in university ID
-        "cardnumber": student["student_id"],
+        # fill in Prox number if we have it, or default to UID
+        "cardnumber": prox_map.get(student["universal_id"],
+                                   student["universal_id"]).strip(),
         "dateenrolled": today.isoformat(),
         "dateexpiry": args.semester_end,
         "email": student["inst_email"],
@@ -158,8 +161,9 @@ def make_employee_row(person):
     patron = {
         "branchcode": 'SF',
         "categorycode": category[person["etype"]],
-        # patrons don't have a barcode yet, fill in university ID
-        "cardnumber": person["universal_id"],
+        # fill in Prox number if we have it, or default to UID
+        "cardnumber": prox_map.get(person["universal_id"],
+                                   person["universal_id"]).strip(),
         "dateenrolled": today.isoformat(),
         # @TODO this date varies by categorycode now
         "dateexpiry": expirationDate(person),
@@ -196,34 +200,35 @@ def main():
             raise Exception('Expected to find file "{}" in project root.'
                             .format(file))
 
+    global prox_map
+    prox_map = create_prox_map(PROX_FILE)
+
     OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
     koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
                    'dateexpiry', 'email', 'firstname', 'patron_attributes',
                    'surname', 'userid', ]
 
-    if os.path.exists(STU_FILE):
-        print('Adding students to Koha patron CSV.')
-        with open(STU_FILE, 'r') as file:
-            students = json.load(file)["Report_Entry"]
-            with open(OUT_FILE, 'w') as output:
-                writer = csv.DictWriter(output, fieldnames=koha_fields)
-                writer.writeheader()
-                for stu in students:
-                    row = make_student_row(stu)
-                    if row:
-                        writer.writerow(row)
+    print('Adding students to Koha patron CSV.')
+    with open(STU_FILE, 'r') as file:
+        students = json.load(file)["Report_Entry"]
+        with open(OUT_FILE, 'w') as output:
+            writer = csv.DictWriter(output, fieldnames=koha_fields)
+            writer.writeheader()
+            for stu in students:
+                row = make_student_row(stu)
+                if row:
+                    writer.writerow(row)
 
-    if os.path.exists(EMP_FILE):
-        print('Adding Faculty/Staff to Koha patron CSV.')
-        with open(EMP_FILE, 'r') as file:
-            employees = json.load(file)["Report_Entry"]
-            # open in append mode & don't add header row
-            with open(OUT_FILE, 'a') as output:
-                writer = csv.DictWriter(output, fieldnames=koha_fields)
-                for employee in employees:
-                    row = make_employee_row(employee)
-                    if row:
-                        writer.writerow(row)
+    print('Adding Faculty/Staff to Koha patron CSV.')
+    with open(EMP_FILE, 'r') as file:
+        employees = json.load(file)["Report_Entry"]
+        # open in append mode & don't add header row
+        with open(OUT_FILE, 'a') as output:
+            writer = csv.DictWriter(output, fieldnames=koha_fields)
+            for employee in employees:
+                row = make_employee_row(employee)
+                if row:
+                    writer.writerow(row)
 
     print('Done! Upload the CSV at \
     https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
