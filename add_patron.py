@@ -4,7 +4,7 @@ import urllib3
 
 import requests
 
-from mapping import category
+from koha_mappings import category
 
 
 with open('config.json', 'r') as f:
@@ -25,7 +25,7 @@ def get_oauth_token():
         "grant_type": "client_credentials",
     }
     response = requests.post(config['api_root'] + '/oauth/token',
-                    data=data, verify=False)
+                             data=data, verify=False)
     token = str(response.json()['access_token'])
     return token
 
@@ -50,8 +50,9 @@ def add_patron(patron, token=None):
     }
     # @TODO try/except block to work around OAuth token expiring
     response = requests.post(config['api_root'] + '/patrons',
-                    json=patron, headers=headers, verify=False)
+                             json=patron, headers=headers, verify=False)
     return response
+
 
 # surname, address, city, library_id, category_id are all required
 # this outlines, more or less, our idea of a minimum viable record

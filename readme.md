@@ -53,7 +53,7 @@ To use the API:
 - insert the client ID and secret into config.json (also edit the `api_root` if need be)
 - run a script similar to add_patron.py (WIP)
 
-One limitation of the API is that patron extended attributes cannot be created nor modified. We use attributes to record student major and faculty department, so that greatly curbs the API's usefulness. Luckily, there was development recently (May, 2021) to add this functionality (see [bug #23666](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=23666)) and it is included in Koha 21.05. We can revisit adding patrons via API when we upgrade, which should be early in 2022.
+The API previously had a limitation that patron extended attributes could not be created nor modified. We use attributes to record student major and faculty department, so that curbed the API's usefulness. Luckily, a new `/patron/{id}/extended_attributes` route (see [bug #23666](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=23666)) was added in Koha 21.05.
 
 # LICENSE
 

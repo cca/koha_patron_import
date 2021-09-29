@@ -1,5 +1,5 @@
 {
     "api_root": "https://koha.edu/api/v1",
     "client_id": "1234abcd-1234-abcd-1234-abcd1234abcd",
-    "client_secret": "1234abcd-1234-abcd-1234-abcd1234abcd",
+    "client_secret": "1234abcd-1234-abcd-1234-abcd1234abcd"
 }
