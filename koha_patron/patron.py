@@ -45,6 +45,17 @@ class KohaPatron(SimpleNamespace):
             setattr(self, key, value)
         return self
 
+    def get_attributes(self):
+        # get all extended attributes
+        http = request_wrapper()
+        response = http.get('{}/patrons/{}/extended_attributes'.format(
+            config['api_root'],
+            self.patron_id
+        ))
+        response.raise_for_status()
+        self.extended_attributes = response.json()
+        return self
+
     def update(self):
         http = request_wrapper()
         response = http.put('{}/patrons/{}'.format(
