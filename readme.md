@@ -49,8 +49,8 @@ Koha has a budding REST API which already has a well-developed `/patrons` endpoi
 To use the API:
 
 - sign into the Koha staff side, find your patron record, go to **More** > **Manage API Keys**
-- copy the included example.config.json file to config.json
-- insert the client ID and secret into config.json (also edit the `api_root` if need be)
+- copy koha_patron/example.config.py to koha_patron/config.py
+- insert the client ID and secret into config.py (also edit the `api_root` if need be)
 - run a script similar to add_patron.py (WIP)
 
 The API previously had a limitation that patron extended attributes could not be created nor modified. We use attributes to record student major and faculty department, so that curbed the API's usefulness. Luckily, a new `/patron/{id}/extended_attributes` route (see [bug #23666](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=23666)) was added in Koha 21.05.

@@ -12,7 +12,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def request_wrapper():
     # get a new OAuth token if there isn't one in the global namespace
-    if not "token" in globals():
+    if "token" not in globals():
         global token
         token = get_token()
     headers = {

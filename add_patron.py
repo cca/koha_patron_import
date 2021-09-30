@@ -1,14 +1,11 @@
 """ create patron record via Koha REST API """
-import json
 import urllib3
 
 import requests
 
 from koha_mappings import category
+from koha_patron.config import config
 
-
-with open('config.json', 'r') as f:
-    config = json.load(f)
 
 # ByWater's SSL cert causes problems so every request has verify=False
 # and we do this to silence printed warnings
