@@ -23,6 +23,7 @@ prox_map = create_prox_map('prox.csv')
 with open('employee_data.json', 'r') as file:
     people = json.load(file)["Report_Entry"]
 
+missing = []
 libraries = [p for p in people if p.get('department', None) == 'Libraries']
 # libraries = [p for p in people if p.get('username') == 'ephetteplace']
 print('There are {} Library staff.'.format(len(libraries)))
@@ -48,8 +49,9 @@ def update_patron(koha):
     response.raise_for_status()
 
 
-def missing_patron(un):
-    print('Could not find any patrons with a userid of "{}"'.format(un))
+def missing_patron(workday):
+    print('Could not find any patrons with a userid of "{}"'.format(workday['username']))
+    missing.append(workday)
 
 
 # clarify where data is coming from/going to with dict names
@@ -64,9 +66,7 @@ for workday in libraries:
         patrons = response.json()
 
         if len(patrons) == 0:
-            # @TODO shouldn't we write these patrons to a CSV so we can upload
-            # them to Koha?
-            missing_patron(workday['username'])
+            missing_patron(workday)
 
         elif len(patrons) == 1:
             update_patron(patrons[0])
@@ -75,7 +75,7 @@ for workday in libraries:
             # multiple patrons returned (e.g. look at results for userid=nchan)
             patrons = [p for p in patrons if p['userid'] == workday['username']]
             if len(patrons) == 0:
-                missing_patron(workday['username'])
+                missing_patron(workday)
             elif len(patrons) == 1:
                 update_patron(patrons[0])
             else:
@@ -88,3 +88,8 @@ for workday in libraries:
             workday['username'],
             workday['universal_id'],
         ))
+
+if len(missing) > 0:
+    # write missing patrons to a file so we can add them later
+    with open('missing-patrons.json', 'w') as file:
+        json.dump(missing, file)
