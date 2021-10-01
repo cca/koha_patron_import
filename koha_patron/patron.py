@@ -7,11 +7,11 @@ from .request_wrapper import request_wrapper
 PATRON_READ_ONLY_FIELDS = ("anonymized", "restricted", "updated_on")
 
 
-class KohaPatron(SimpleNamespace):
+class Patron(SimpleNamespace):
     def __init__(self, patron_id):
         self.patron_id = patron_id
         if patron_id is None:
-            raise Exception("Cannot instantiate KohaPatron without a Patron ID parameter.")
+            raise Exception("Cannot instantiate Patron object without a Patron ID parameter.")
         self.get()
 
     def __repr__(self):
@@ -57,6 +57,7 @@ class KohaPatron(SimpleNamespace):
         return self
 
     def update(self):
+        # sync local object to Koha
         http = request_wrapper()
         response = http.put('{}/patrons/{}'.format(
             config['api_root'],
