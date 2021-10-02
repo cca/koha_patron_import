@@ -36,12 +36,14 @@ def update_patron(koha):
         koha['surname'],
         koha['patron_id'],
     ))
-    koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone') or ''
     # Note bug #29157: date_of_birth = None causes Koha to set it to the current
     # date. DOB = empty string, "undef", or "null" all cause errors.
+    koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone') or ''
+
     # must do this or PUT request fails b/c we can't edit these fields
     for field in PATRON_READ_ONLY_FIELDS:
         koha.pop(field, None)
+
     response = http.put('{}/patrons/{}'.format(
         config['api_root'],
         koha['patron_id'],
