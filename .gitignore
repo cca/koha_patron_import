@@ -3,3 +3,4 @@ data/*
 !data/test.csv
 config.json
 config.py
+.tmp.drive*
