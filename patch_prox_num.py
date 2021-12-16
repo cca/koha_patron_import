@@ -1,6 +1,8 @@
 import csv
 import json
 
+from requests.exceptions import HTTPError
+
 from koha_patron.config import config
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
 from koha_patron.request_wrapper import request_wrapper
@@ -19,27 +21,15 @@ def create_prox_map(proxfile):
         return map
 
 
-prox_map = create_prox_map('prox.csv')
-with open('employee_data.json', 'r') as file:
-    people = json.load(file)["Report_Entry"]
-
-missing = []
-libraries = [p for p in people if p.get('department', None) == 'Libraries']
-# libraries = [p for p in people if p.get('username') == 'ephetteplace']
-print('There are {} Library staff.'.format(len(libraries)))
-http = request_wrapper()
-
-
-def update_patron(koha):
+def update_patron(koha, workday, prox):
     print('Updating phone and cardnumber for {} {} (borrowernumber {})'.format(
         koha['firstname'],
         koha['surname'],
         koha['patron_id'],
     ))
-    # Note bug #29157: date_of_birth = None causes Koha to set it to the current
-    # date. DOB = empty string, "undef", or "null" all cause errors.
-    koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone') or ''
 
+    koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone') or ''
+    koha['cardnumber'] = prox
     # must do this or PUT request fails b/c we can't edit these fields
     for field in PATRON_READ_ONLY_FIELDS:
         koha.pop(field, None)
@@ -48,7 +38,19 @@ def update_patron(koha):
         config['api_root'],
         koha['patron_id'],
     ), json=koha)
-    response.raise_for_status()
+
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        print('Error', response)
+        print('HTTP Response Headers', response.headers)
+        print(response.text)
+        print('Error for patron {} ({} {}) with prox number {}'.format(
+            workday['username']),
+            workday['first_name'],
+            workday['last_name'],
+            prox
+        )
 
 
 def missing_patron(workday):
@@ -56,42 +58,70 @@ def missing_patron(workday):
     missing.append(workday)
 
 
-# clarify where data is coming from/going to with dict names
-for workday in libraries:
-    if workday['universal_id'] in prox_map:
-        prox = prox_map[workday['universal_id']]
-        response = http.get('{}/patrons?userid={}'.format(
-            config['api_root'],
-            workday['username'],
-        ))
-        response.raise_for_status()
-        patrons = response.json()
+def main():
+    prox_map = create_prox_map('data/prox.csv')
+    with open('data/employee_data.json', 'r') as file:
+        people = json.load(file)["Report_Entry"]
 
-        if len(patrons) == 0:
-            missing_patron(workday)
+    global missing
+    missing = []
+    # uncomment the next line to test on just Libraries staff
+    # people = [p for p in people if p.get('department', None) == 'Libraries']
+    # people = people[0:10]
+    global http
+    http = request_wrapper()
+    # clarify where data is coming from/going to with dict names
+    for workday in people:
+        if workday['universal_id'] in prox_map:
+            prox = prox_map[workday['universal_id']]
+            response = http.get('{}/patrons?userid={}'.format(
+                config['api_root'],
+                workday['username'],
+            ))
+            try:
+                response.raise_for_status()
+            except HTTPError:
+                print('Error', response)
+                print('HTTP Response Headers', response.headers)
+                print(response.text)
+                print('Error for patron {} ({} {}) with prox number {}'.format(
+                    workday['username'],
+                    workday['first_name'],
+                    workday['last_name'],
+                    prox,
+                ))
+            patrons = response.json()
 
-        elif len(patrons) == 1:
-            update_patron(patrons[0])
+            if not patrons.get('errors'):
+                if len(patrons) == 0:
+                    missing_patron(workday)
+
+                elif len(patrons) == 1:
+                    update_patron(patrons[0], workday, prox)
+
+                else:
+                    # multiple patrons returned (e.g. look at results for userid = nchan
+                    # which is a substring of another username)
+                    patrons = [p for p in patrons if p['userid'] == workday['username']]
+                    if len(patrons) == 0:
+                        missing_patron(workday)
+                    elif len(patrons) == 1:
+                        update_patron(patrons[0], workday, prox)
+                    else:
+                        raise Exception('Found multiple patrons with the username "{}", something has gone horribly wrong. Patron records: {}'.format(workday['username'], patrons))
 
         else:
-            # multiple patrons returned (e.g. look at results for userid=nchan)
-            patrons = [p for p in patrons if p['userid'] == workday['username']]
-            if len(patrons) == 0:
-                missing_patron(workday)
-            elif len(patrons) == 1:
-                update_patron(patrons[0])
-            else:
-                raise Exception('Found multiple patrons with the username "{}", something has gone horribly wrong. Patron records: {}'.format(workday['username'], patrons))
+            print('{} {} ({}) has universal ID {} and no prox number'.format(
+                workday['first_name'],
+                workday['last_name'],
+                workday['username'],
+                workday['universal_id'],
+            ))
 
-    else:
-        print('{} {} ({}) has universal ID {} and no prox number'.format(
-            workday['first_name'],
-            workday['last_name'],
-            workday['username'],
-            workday['universal_id'],
-        ))
+    if len(missing) > 0:
+        # write missing patrons to a file so we can add them later
+        with open('missing-patrons.json', 'w') as file:
+            json.dump(missing, file)
 
-if len(missing) > 0:
-    # write missing patrons to a file so we can add them later
-    with open('missing-patrons.json', 'w') as file:
-        json.dump(missing, file)
+if __name__ == '__main__':
+    main()
