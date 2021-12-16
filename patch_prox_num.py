@@ -28,6 +28,8 @@ def update_patron(koha, workday, prox):
         koha['patron_id'],
     ))
 
+    # backup old cardnumber in "sort2" field
+    koha['statistics_2'] = koha['cardnumber']
     koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone') or ''
     koha['cardnumber'] = prox
     # must do this or PUT request fails b/c we can't edit these fields
@@ -67,7 +69,6 @@ def main():
     missing = []
     # uncomment the next line to test on just Libraries staff
     # people = [p for p in people if p.get('department', None) == 'Libraries']
-    # people = people[0:10]
     global http
     http = request_wrapper()
     # clarify where data is coming from/going to with dict names
@@ -92,7 +93,8 @@ def main():
                 ))
             patrons = response.json()
 
-            if not patrons.get('errors'):
+            # patrons is a dict if we had an error above, list otherwise
+            if type(patrons) == list:
                 if len(patrons) == 0:
                     missing_patron(workday)
 
@@ -108,7 +110,9 @@ def main():
                     elif len(patrons) == 1:
                         update_patron(patrons[0], workday, prox)
                     else:
-                        raise Exception('Found multiple patrons with the username "{}", something has gone horribly wrong. Patron records: {}'.format(workday['username'], patrons))
+                        raise Exception(('Found multiple patrons with the username "{}", '
+                                        'something has gone horribly wrong. Patron records: {}')
+                                        .format(workday['username'], patrons))
 
         else:
             print('{} {} ({}) has universal ID {} and no prox number'.format(
