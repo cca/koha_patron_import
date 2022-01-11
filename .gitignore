@@ -1,5 +1,4 @@
 data/*
 !data/koha_starter.csv
-!data/test.csv
 config.py
 .tmp.drive*
