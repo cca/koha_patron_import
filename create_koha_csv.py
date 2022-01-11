@@ -209,7 +209,7 @@ def main():
     OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
     koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
                    'dateexpiry', 'email', 'firstname', 'patron_attributes',
-                   'surname', 'userid', ]
+                   'surname', 'userid', 'phone' ]
 
     print('Adding students to Koha patron CSV.')
     with open(STU_FILE, 'r') as file:
@@ -233,8 +233,8 @@ def main():
                 if row:
                     writer.writerow(row)
 
-    print('Done! Upload the CSV at \
-    https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
+    print('Done! Upload the CSV at '
+    'https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
     path = input('Where would you like to archive the data files? (e.g. '
                  'data/2019FA) ')
     if path.strip() != '' and path.strip().lower() != 'n':
