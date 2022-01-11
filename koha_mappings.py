@@ -46,6 +46,7 @@ fac_depts = {
     "Fine Arts": 3,
     "First Year": 10,
     "Furniture Design": 2,
+    "Game Arts": 3,
     "Glass": 3,
     "Grad Comics": 7,
     "Grad Design": 2,
