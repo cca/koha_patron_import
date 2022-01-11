@@ -13,7 +13,9 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 1. Set up a python virtual environment & install dependencies: `pipenv --three && pipenv shell
 && pipenv install`
 
-1. Obtain access to CCA Integrations data in Google Cloud (contact the Integration Engineer). There should be JSON files present for employees, students, and courses for recent terms.
+1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, and courses for recent terms.
+
+1. Obtain access to the "Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
 
 ## Details
 
