@@ -74,9 +74,9 @@ def make_student_row(student):
         major = str(stu_major[student["primary_program"]])
         patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
     else:
-        for cred in student["program_credentials"]:
-            if cred["program"] in stu_major:
-                major = str(stu_major[cred["program"]])
+        for program in student["programs"]:
+            if program["program"] in stu_major:
+                major = str(stu_major[program["program"]])
                 patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
                 break
     # we couldn't find a major, print a warning
@@ -85,7 +85,7 @@ def make_student_row(student):
         primary program: {}, program credentials: {}""".format(
             student["username"],
             student["primary_program"],
-            vars(student["program_credentials"])
+            vars(student["programs"])
         ))
 
     return patron

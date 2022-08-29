@@ -25,6 +25,7 @@ fac_depts = {
     "Center for Art and Public Life": 9,
     "Center for Impact": 9,
     "Ceramics": 3,
+    "Comics": 7,
     "Communications": "a",
     "Community Arts": 3,
     "Creative Instructional Technologies": "a",
@@ -96,6 +97,7 @@ stu_major = {
     "Animation": 1,
     "Architecture": 2,
     "Ceramics": 3,
+    "Comics": 40,
     "Community Arts": 4,
     # this one's a toss-up, putting it with MFA Design for now
     "Dual Degree: Graduate Design/Design Strategy": 24,
