@@ -1,6 +1,15 @@
+"""
+Usage: patch_prox_num.py <prox> <jsonfile>
+
+Iterates over the user accounts in the provided JSON file (which can be a
+student or employee export from Workday) and, if their prox number isn't in
+Koha, adds it.
+"""
 import csv
+from datetime import date
 import json
 
+from docopt import docopt
 from requests.exceptions import HTTPError
 
 from koha_patron.config import config
@@ -66,9 +75,9 @@ def missing_patron(workday):
     missing.append(workday)
 
 
-def main():
-    prox_map = create_prox_map('data/prox.csv')
-    with open('data/student_data.json', 'r') as file:
+def main(arguments):
+    prox_map = create_prox_map(arguments['<prox>'])
+    with open(arguments['<jsonfile>'], 'r') as file:
         people = json.load(file)["Report_Entry"]
 
     # global vars that other functions need to access
@@ -136,11 +145,12 @@ def main():
 
     if len(missing) > 0:
         # write missing patrons to a file so we can add them later
-        with open('missing-patrons.json', 'w') as file:
+        with open('{}-missing-patrons.json'.format(date.today().isoformat()), 'w') as file:
             json.dump(missing, file)
 
 if __name__ == '__main__':
-    main()
+    arguments = docopt(__doc__, version='Patch Prox Number 1.0')
+    main(arguments)
     print("Summary:\n\t- {}\n\t- {}\n\t- {}\n\t- {}".format(
         "Updated Patrons: " + str(totals["updated"]),
         "No Prox number: " + str(totals["no_prox"]),
