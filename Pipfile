@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 requests = "==2.27"
-gsutil = "==5.6"
+gsutil = "==5.16"
 docopt = "~=0.6"
 
 [requires]
