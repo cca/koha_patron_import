@@ -19,7 +19,7 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 ## Details
 
-1. Download JSON files from Google Cloud to the root of this project e.g. `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. The script expects them to retain their names, "student_data.json" and "employee_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs") and save it as "prox.csv" in the root of this project.
+1. Download JSON files from Google Cloud to the root of this project e.g. `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. The script expects them to retain their names, "student_data.json" and "employee_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs") and save it as "Accounts with Prox IDs.csv" in the root of this project.
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". I wrote a shell script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) to parse the employee/student data and write all major/department values to text files in the data directory. You can diff the results of this against its last iteration to find any new or modified values.
 

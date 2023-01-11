@@ -197,7 +197,7 @@ def make_employee_row(person):
 def main():
     EMP_FILE = 'employee_data.json'
     STU_FILE = 'student_data.json'
-    PROX_FILE = 'prox.csv'
+    PROX_FILE = 'Accounts with Prox IDs.csv'
     for file in [EMP_FILE, STU_FILE, PROX_FILE]:
         if not os.path.exists(file):
             raise Exception('Expected to find file "{}" in project root.'
