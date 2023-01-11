@@ -41,7 +41,8 @@ def create_prox_map(proxfile):
         # Universal ID => prox number mapping
         # Numbers in prox report have a varying number of leading zeroes, e.g.
         # "001000001", "010000001", so we strip by casting to int & back to str
-        map = {str(int(rows[0])): str(int(rows[1])) for rows in reader if int(rows[1]) != 0}
+        map = {str(int(rows[0])): str(int(rows[1])) for rows in reader if
+               int(rows[1]) != 0}
         return map
 
 
@@ -113,8 +114,8 @@ def expirationDate(person):
     # an etype but _do_ have a "future_etype".
     type = person.get('etype') or person.get('etype_future')
     if not type:
-        print(('Warning: employee {} does not have an etype nor a etype_future.'
-               ' They will be assigned the Staff expiration date.'
+        print(('Warning: employee {} does not have an etype nor a etype_future'
+               '. They will be assigned the Staff expiration date.'
                .format(person["username"])))
         type = 'Staff'
     d = date.fromisoformat(args.semester_end)
@@ -132,14 +133,16 @@ def expirationDate(person):
             return str(d.replace(year=d.year + 1, month=1, day=31))
         # @TODO how do we handle Summer?
         else:
-            raise Exception('Summer expiration dates for faculty not implemented yet.')
+            raise Exception('Summer expiration dates for faculty not'
+                            ' implemented yet.')
     pass
 
 
 def make_employee_row(person):
     # skip 1) people who are inactive (usually hire date hasn't arrived yet),
     # 2) people w/o emails, 3) the one random record for a student
-    if (person["active_status"] == "0" or not person.get("work_email") or person["etype"] == "Students"):
+    if (person["active_status"] == "0" or not person.get("work_email") or
+        person["etype"] == "Students"):
         return None
 
     # create a hybrid program/department field
@@ -156,7 +159,9 @@ def make_employee_row(person):
     if person["job_profile"] == "Special Programs Instructor (inactive)":
         return None
     # we assume etype=Instructors => special programs faculty
-    if (person["etype"] == "Instructors" and person["job_profile"] != "Special Programs Instructor" and person["job_profile"] not in fac_depts):
+    if (person["etype"] == "Instructors"
+        and person["job_profile"] != "Special Programs Instructor"
+        and person["job_profile"] not in fac_depts):
         print(('Warning: Instructor {} is not a Special Programs Instructor, '
                'check record.').format(person["username"]))
 
