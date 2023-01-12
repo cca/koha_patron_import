@@ -58,11 +58,6 @@ def make_student_row(student):
     if student.get("inst_email") is None or student.get("last_name") is None:
         return None
 
-    # @TODO temporary measure for 2023SP
-    # skip students without a prox number
-    if not prox_map.get(student["universal_id"]):
-        return None
-
     patron = {
         "branchcode": 'SF',
         "categorycode": category[student["academic_level"]],
