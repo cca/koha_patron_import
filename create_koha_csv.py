@@ -15,6 +15,8 @@ from datetime import date, timedelta
 import json
 import os
 
+from termcolor import colored
+
 from koha_mappings import category, fac_depts, stu_major
 
 today = date.today()
@@ -44,6 +46,10 @@ def create_prox_map(proxfile):
         map = {str(int(rows[0])): str(int(rows[1])) for rows in reader if
                int(rows[1]) != 0}
         return map
+
+
+def warn(string):
+    print(colored('Warning: ' + string, 'red'))
 
 
 def make_student_row(student):
@@ -87,7 +93,7 @@ def make_student_row(student):
                 break
     # we couldn't find a major, print a warning
     if major is None:
-        print("""Unable to parse major for student {},
+        warn("""Unable to parse major for student {},
         primary program: {}, program credentials: {}""".format(
             student["username"],
             student["primary_program"],
@@ -119,8 +125,8 @@ def expirationDate(person):
     # an etype but _do_ have a "future_etype".
     type = person.get('etype') or person.get('etype_future')
     if not type:
-        print(('Warning: employee {} does not have an etype nor a etype_future'
-               '. They will be assigned the Staff expiration date.'
+        warn(('Employee {} does not have an etype nor a etype_future. They '
+               'will be assigned the Staff expiration date.'
                .format(person["username"])))
         type = 'Staff'
     d = date.fromisoformat(args.semester_end)
@@ -167,8 +173,8 @@ def make_employee_row(person):
     if (person["etype"] == "Instructors"
         and person["job_profile"] != "Special Programs Instructor"
         and person["job_profile"] not in fac_depts):
-        print(('Warning: Instructor {} is not a Special Programs Instructor, '
-               'check record.').format(person["username"]))
+        warn(('Instructor {} is not a Special Programs Instructor, check '
+               'record.').format(person["username"]))
 
     patron = {
         "branchcode": 'SF',
@@ -193,11 +199,11 @@ def make_employee_row(person):
         patron["patron_attributes"] += ',FACDEPT:{}'.format(code)
     elif person["prodep"]:
         # there's a non-empty program/department value we haven't accounted for
-        print("""No mapping in koha_mappings.fac_depts for faculty/staff prodep
+        warn("""No mapping in koha_mappings.fac_depts for faculty/staff prodep
         "{}", see patron {}""".format(person["prodep"], person["username"]))
 
     if person["prodep"] is None:
-        print('Warning: employee {} has no academic program or department:'
+        warn('Employee {} has no academic program or department:'
               .format(person["username"]))
         print(person)
 
@@ -253,7 +259,7 @@ def main():
             try:
                 os.mkdir(path)
             except PermissionError:
-                print('Unable to create directory at path "{}".'.format(path))
+                warn('Unable to create directory at path "{}".'.format(path))
                 exit(1)
 
         for name in [STU_FILE, EMP_FILE, PROX_FILE, OUT_FILE]:

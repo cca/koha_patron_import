@@ -9,6 +9,7 @@ verify_ssl = true
 requests = "~=2.28.1"
 gsutil = "*"
 docopt = "~=0.6"
+termcolor = "*"
 
 [requires]
 python_version = "3.7"
