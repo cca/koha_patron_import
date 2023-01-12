@@ -32,6 +32,7 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
     - **Field to use for record matching** is "Username"
     - Leave all of the default values blank
     - Set **If matching record is already in the borrowers table:** to "Ignore this one, keep the existing one" and "Replace only included patron attributes" below that. These are the defaults.
+    - Send the welcome email to new patrons
     - Click the **Import** button
 
 After import, Koha informs you exactly how many patrons records were created, overwritten, & if any rows in the import CSV were malformed. You can copy the full text output of this page and save it into the data directory.
