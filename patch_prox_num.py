@@ -25,8 +25,8 @@ def create_prox_map(proxfile):
         next(reader)
         # Universal ID => prox number mapping
         # Prox report Univ IDs have varying number of leading zeroes e.g.
-        # "001000001", "010000001", so we strip by casting to int & back to str
-        map = {str(int(rows[0])): str(int(rows[1])) for rows in reader if int(rows[1]) != 0}
+        # "001000001", "010000001", so we strip them
+        map = {rows[0].lstrip("0"): rows[1].lstrip("0") for rows in reader if int(rows[1]) != 0}
         return map
 
 
