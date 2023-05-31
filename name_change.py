@@ -3,7 +3,7 @@ change a patron's name via the REST API
 usage:
     python name_change.py changes.csv
 """
-import config
+from koha_patron.config import config
 from koha_patron.oauth import get_token
 from koha_patron.request_wrapper import request_wrapper
 
