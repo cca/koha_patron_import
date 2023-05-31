@@ -98,7 +98,7 @@ def make_student_row(student):
     return patron
 
 
-def expirationDate(person):
+def expiration_date(person):
     """Calculate patron expiration date based on personnel data and the last
     day of the semester.
 
@@ -179,7 +179,7 @@ def make_employee_row(person):
                                    person["universal_id"]).strip(),
         "dateenrolled": today.isoformat(),
         # @TODO this date varies by categorycode now
-        "dateexpiry": expirationDate(person),
+        "dateexpiry": expiration_date(person),
         "email": person["work_email"],
         "firstname": person["first_name"],
         "patron_attributes": "UNIVID:" + person["universal_id"],
