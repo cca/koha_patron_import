@@ -12,6 +12,7 @@ import json
 
 from docopt import docopt
 from requests.exceptions import HTTPError
+from termcolor import colored
 
 from koha_patron.config import config
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
@@ -34,11 +35,12 @@ def create_prox_map(proxfile):
 def log_http_error(response, workday, prox):
     """ log info about HTTP error """
     totals["error"] += 1
-    print('Error', response)
+    print(colored('Error', 'red'), response)
     print('HTTP Response Headers', response.headers)
     print(response.text)
-    print(f"""Error for patron {workday['username']} ({workday['first_name']}"""
-          f""" {workday['last_name']}) with prox number {prox}""")
+    print(colored(f"""Error for patron {workday['username']} """
+        f"""({workday['first_name']} {workday['last_name']}) with prox """
+        f"""number {prox}"""), 'red')
 
 
 def update_patron(koha, workday, prox):
@@ -143,11 +145,6 @@ def main(arguments):
                             missing_patron(workday)
                         elif len(patrons) == 1:
                             update_patron(patrons[0], workday, prox)
-                        else:
-                            # this probably isn't possible... @TODO f string
-                            raise Exception(('Found multiple patrons with the username "{}", '
-                                            'something has gone horribly wrong. Patron records: {}')
-                                            .format(workday['username'], patrons))
 
     if len(missing) > 0:
         # write missing patrons to a file so we can add them later
