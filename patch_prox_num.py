@@ -1,9 +1,10 @@
 """
-Usage: patch_prox_num.py <prox> <jsonfile>
+Usage: patch_prox_num.py <prox> <jsonfile> [<old_prox>]
 
 Iterates over the user accounts in the provided JSON file (which can be a
 student or employee export from Workday) and, if their prox number isn't in
-Koha, adds it.
+Koha, adds it. If you provide a previous iteration of the prox number report
+then the script will only check the Koha record if we have a new prox number.
 """
 import csv
 from datetime import date
@@ -30,16 +31,23 @@ def create_prox_map(proxfile):
         return map
 
 
+def log_http_error(response, workday, prox):
+    """ log info about HTTP error """
+    totals["error"] += 1
+    print('Error', response)
+    print('HTTP Response Headers', response.headers)
+    print(response.text)
+    print(f"""Error for patron {workday['username']} ({workday['first_name']}"""
+          f""" {workday['last_name']}) with prox number {prox}""")
+
+
 def update_patron(koha, workday, prox):
-    print('Updating phone and cardnumber for {} {} (borrowernumber {})'.format(
-        koha['firstname'],
-        koha['surname'],
-        koha['patron_id'],
-    ))
+    print(f"""Updating cardnumber for {koha['userid']} ({koha['firstname']} """
+          f"""{koha['surname']}, borrowernumber {koha['patron_id']})""")
 
     # backup old cardnumber in "sort2" field
     koha['statistics_2'] = koha['cardnumber']
-    koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone') or ''
+    # koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone', '')
     koha['cardnumber'] = prox
     # must do this or PUT request fails b/c we can't edit these fields
     for field in PATRON_READ_ONLY_FIELDS:
@@ -53,16 +61,7 @@ def update_patron(koha, workday, prox):
     try:
         response.raise_for_status()
     except HTTPError:
-        totals["error"] += 1
-        print('Error', response)
-        print('HTTP Response Headers', response.headers)
-        print(response.text)
-        print('Error for patron {} ({} {}) with prox number {}'.format(
-            workday['username']),
-            workday['first_name'],
-            workday['last_name'],
-            prox
-        )
+        log_http_error(response, workday, prox)
         return False
 
     totals["updated"] += 1
@@ -75,85 +74,99 @@ def missing_patron(workday):
     missing.append(workday)
 
 
-def main(arguments):
-    prox_map = create_prox_map(arguments['<prox>'])
-    with open(arguments['<jsonfile>'], 'r') as file:
-        people = json.load(file)["Report_Entry"]
+def prox_unchanged(wd):
+    totals["prox unchanged"] += 1
+    print(f"Prox number unchanged for {wd['first_name']} {wd['last_name']} ({wd['username']})")
 
+
+def no_prox(wd):
+    totals["no prox"] += 1
+    print(f"""{wd['first_name']} {wd['last_name']} ({wd['username']}) has """
+          f"""universal ID {wd['universal_id']} and no prox number""")
+
+
+def is_contractor(wd):
+    return wd.get('etype', None) == 'Contingent Employees/Contractors' or wd.get('job_profile', None) == 'Temporary System/Campus Access' or False
+
+
+def main(arguments):
     # global vars that other functions need to access
     global missing
     missing = []
     global totals
-    totals = { "missing": 0, "error": 0, "updated": 0, "no_prox": 0}
+    totals = { "missing": 0, "error": 0, "updated": 0, "no prox": 0}
     global http
     http = request_wrapper()
+
+    prox_map = create_prox_map(arguments['<prox>'])
+    if arguments['<old_prox>']:
+        old_prox_map = create_prox_map(arguments['<old_prox>'])
+        totals["prox unchanged"] = 0
+
+    with open(arguments['<jsonfile>'], 'r') as file:
+        people = json.load(file)["Report_Entry"]
 
     # uncomment the next line to test on just Libraries staff
     # people = [p for p in people if p.get('department', None) == 'Libraries']
     for workday in people:
-        if workday['universal_id'] in prox_map:
+        if not workday['universal_id'] in prox_map:
+            no_prox(workday)
+        else:
             prox = prox_map[workday['universal_id']]
-            response = http.get('{}/patrons?userid={}'.format(
-                config['api_root'],
-                workday['username'],
-            ))
-            try:
-                response.raise_for_status()
-            except HTTPError:
-                totals["error"] += 1
-                print('Error', response)
-                print('HTTP Response Headers', response.headers)
-                print(response.text)
-                print('Error for patron {} ({} {}) with prox number {}'.format(
+            if old_prox_map and old_prox_map.get(workday['universal_id'], None) == prox:
+                prox_unchanged(workday)
+            else:
+                # @TODO this long passage needs to be split into fns badly
+                response = http.get('{}/patrons?userid={}'.format(
+                    config['api_root'],
                     workday['username'],
-                    workday['first_name'],
-                    workday['last_name'],
-                    prox,
                 ))
-            patrons = response.json()
+                try:
+                    response.raise_for_status()
+                except HTTPError:
+                    log_http_error(response, workday, prox)
+                patrons = response.json()
 
-            # patrons is a dict if we had an error above, list otherwise
-            if type(patrons) == list:
-                if len(patrons) == 0:
-                    missing_patron(workday)
-
-                elif len(patrons) == 1:
-                    update_patron(patrons[0], workday, prox)
-
-                else:
-                    # multiple patrons returned (e.g. look at results for userid = nchan
-                    # which is a substring of another username)
-                    patrons = [p for p in patrons if p['userid'] == workday['username']]
+                # patrons is a dict if we had an error above, list otherwise
+                if type(patrons) == list:
                     if len(patrons) == 0:
                         missing_patron(workday)
+
                     elif len(patrons) == 1:
                         update_patron(patrons[0], workday, prox)
-                    else:
-                        # this probably isn't possible...
-                        raise Exception(('Found multiple patrons with the username "{}", '
-                                        'something has gone horribly wrong. Patron records: {}')
-                                        .format(workday['username'], patrons))
 
-        else:
-            totals["no_prox"] += 1
-            print('{} {} ({}) has universal ID {} and no prox number'.format(
-                workday['first_name'],
-                workday['last_name'],
-                workday['username'],
-                workday['universal_id'],
-            ))
+                    else:
+                        # multiple patrons returned (e.g. look at results for userid = nchan
+                        # which is a substring of another username)
+                        patrons = [p for p in patrons if p['userid'] == workday['username']]
+                        if len(patrons) == 0:
+                            missing_patron(workday)
+                        elif len(patrons) == 1:
+                            update_patron(patrons[0], workday, prox)
+                        else:
+                            # this probably isn't possible... @TODO f string
+                            raise Exception(('Found multiple patrons with the username "{}", '
+                                            'something has gone horribly wrong. Patron records: {}')
+                                            .format(workday['username'], patrons))
 
     if len(missing) > 0:
         # write missing patrons to a file so we can add them later
-        with open('{}-missing-patrons.json'.format(date.today().isoformat()), 'w') as file:
+        mfilename = '{}-missing-patrons.json'
+        # filter out temp/contractor positions
+        missing = [m for m in missing if not is_contractor(m)]
+        with open(mfilename.format(date.today().isoformat()), 'w') as file:
             json.dump(missing, file)
+            print(f"Wrote {len(missing)} missing patrons to {mfilename}")
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='Patch Prox Number 1.0')
     main(arguments)
-    print("Summary:\n\t- {}\n\t- {}\n\t- {}\n\t- {}".format(
-        "Updated Patrons: " + str(totals["updated"]),
-        "No Prox number: " + str(totals["no_prox"]),
-        "Missing from Koha: " + str(totals["missing"]),
-        "Errors: " + str(totals["error"]),
-    ))
+    print(f"""
+Summary:
+    - Updated Patrons: {totals["updated"]}
+    - No Prox number: {totals["no prox"]}
+    - Missing from Koha: {totals["missing"]}
+    - Errors: {totals["error"]}""")
+    if totals.get("prox unchanged", False):
+        print(f"""\
+    - Prox unchanged: {totals['prox unchanged']}""")
