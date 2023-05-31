@@ -42,8 +42,8 @@ def create_prox_map(proxfile):
         reader = csv.reader(infile)
         # Universal ID => prox number mapping
         # Numbers in prox report have a varying number of leading zeroes, e.g.
-        # "001000001", "010000001", so we strip by casting to int & back to str
-        map = {str(int(rows[0])): str(int(rows[1])) for rows in reader if
+        # "001000001", "010000001", so we strip them out
+        map = {rows[0].lstrip("0"): rows[1].lstrip("0") for rows in reader if
                int(rows[1]) != 0}
         return map
 
