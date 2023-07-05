@@ -153,7 +153,7 @@ def main(arguments):
         # filter out temp/contractor positions
         missing = [m for m in missing if not is_contractor(m)]
         with open(mfilename, 'w') as file:
-            json.dump(missing, file)
+            json.dump(missing, file, indent=2)
             print(f"Wrote {len(missing)} missing patrons to {mfilename}")
 
 if __name__ == '__main__':
