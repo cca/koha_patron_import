@@ -21,6 +21,7 @@ from koha_patron.request_wrapper import request_wrapper
 
 def create_prox_map(proxfile):
     # this assumes a nicely formed CSV with a single header row & no prologue
+    # @TODO check the file for the prologue & remove it if present
     with open(proxfile, mode='r') as infile:
         reader = csv.reader(infile)
         # skip header row
@@ -148,10 +149,10 @@ def main(arguments):
 
     if len(missing) > 0:
         # write missing patrons to a file so we can add them later
-        mfilename = '{}-missing-patrons.json'
+        mfilename = f'{date.today().isoformat()}-missing-patrons.json'
         # filter out temp/contractor positions
         missing = [m for m in missing if not is_contractor(m)]
-        with open(mfilename.format(date.today().isoformat()), 'w') as file:
+        with open(mfilename, 'w') as file:
             json.dump(missing, file)
             print(f"Wrote {len(missing)} missing patrons to {mfilename}")
 
