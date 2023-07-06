@@ -260,5 +260,4 @@ def main():
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='Create Koha CSV 1.0')
-    print(args)
     main()
