@@ -31,11 +31,11 @@ On a regular basis, we can sync card number changes from the TouchNet report to 
 
 Before each semester, we load new patron accounts using data sourced from Workday to create a CSV that's then batch loaded into Koha.
 
-1. Download JSON files from Google Cloud to the root of this project e.g. `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. The script expects them to retain their names, "student_data.json" and "employee_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs") and save it as "Accounts with Prox IDs.csv" in the root of this project.
+1. Download JSON files from Google Cloud to the root of this project `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. For a summer term, also download pre-college data `gsutil cp gs://integration-success/student_pre_college_data.json .`. The script expects the JSON files to retain their names, e.g. "student_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs").
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". The script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) parses the employee/student data and writes all major/department values to text files in the data directory, then it tries to `git diff` against its own prior iterations.
 
-1. Run the main script `python create_koha_csv.py -s 2021-12-14` where the `-s` parameter is the last day of the semester (see Portal's [Academic Calendar](https://portal.cca.edu/calendar)). The due dates for all account types (staff, student, faculty) are calculated based on this date. The script prints diagnostic messages for users with ambiguous accounts, often hourly or special programs instructors. We need to double check that these accounts either already exist or aren't needed.
+1. Run the main script `python create_koha_csv.py prox_report.csv --end 2023-12-12` where the CSV is Prox report and the `--end` parameter is the last day of the semester (see Portal's [Academic Calendar](https://portal.cca.edu/calendar)). Due dates for all account types (staff, student, faculty) are based on this date. The script prints diagnostic messages for users with ambiguous accounts, often hourly or special programs instructors. We need to double check that these accounts either already exist or aren't needed.
 
 1. In Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 

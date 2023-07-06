@@ -10,10 +10,10 @@ This script takes JSON data from Workday and maps it into a format appropriate
 for import into Koha. We run it once per semester just prior to the semester's
 start. Note that a few things should be manually checked:
 
-    Ensure mappings (patron category, student major) haven't changed
-        (see koha_mappings.py and new-programs.sh)
-    Look up last day of the semester (this is the expiration date, captured
-        in the "-s" flag when the script is run)
+    Ensure mappings (patron category, student major) haven't changed (see
+        koha_mappings.py and new-programs.sh)
+    Look up last day of the semester (expiration dates use this, captured in
+        the "--end" flag when the script is run)
 """
 import csv
 from datetime import date, timedelta
@@ -70,25 +70,26 @@ def make_student_row(student):
         "userid": student["username"],
     }
 
-    # handle student major (additional patron attribute)
-    major = None
-    if student["primary_program"] in stu_major:
-        major = str(stu_major[student["primary_program"]])
-        patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
+    # note for pre-college and skip student major calculation
+    if student.get('academic_level') == 'Pre-College':
+        patron['borrowernotes'] = f'Pre-college {today.year}'
     else:
-        for program in student["programs"]:
-            if program["program"] in stu_major:
-                major = str(stu_major[program["program"]])
-                patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
-                break
-    # we couldn't find a major, print a warning
-    if major is None:
-        warn("""Unable to parse major for student {},
-        primary program: {}, program credentials: {}""".format(
-            student["username"],
-            student["primary_program"],
-            vars(student["programs"])
-        ))
+        # handle student major (additional patron attribute)
+        major = None
+        if student["primary_program"] in stu_major:
+            major = str(stu_major[student["primary_program"]])
+            patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
+        else:
+            for program in student["programs"]:
+                if program["program"] in stu_major:
+                    major = str(stu_major[program["program"]])
+                    patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
+                    break
+        # we couldn't find a major, print a warning
+        if major is None:
+            warn(f"""Unable to parse major for student {student["username"]}
+Primary program: {student["primary_program"]}
+Program credentials: {student["programs"]}""")
 
     return patron
 
@@ -204,64 +205,69 @@ def make_employee_row(person):
     return patron
 
 
-def main():
+def file_exists(fn):
+    if not os.path.exists(fn):
+            warn(f'Did not find "{fn}" file')
+            return False
+    return True
+
+
+def proc_students(pc=False):
+    if pc:
+        IN_FILE = 'student_pre_college_data.json'
+        prefix = ' pre-college '
+    else:
+        IN_FILE = 'student_data.json'
+        prefix = ' '
+
+    if file_exists(IN_FILE):
+        print(f'Adding{prefix}students to Koha patron CSV.')
+        with open(IN_FILE, 'r') as file:
+            students = json.load(file)["Report_Entry"]
+            with open(OUT_FILE, 'a') as output:
+                writer = csv.DictWriter(output, fieldnames=koha_fields)
+                for stu in students:
+                    row = make_student_row(stu)
+                    if row:
+                        writer.writerow(row)
+
+
+def proc_staff():
     EMP_FILE = 'employee_data.json'
-    STU_FILE = 'student_data.json'
-    PROX_FILE = args['<prox_report.csv>']
-    for file in [EMP_FILE, STU_FILE, PROX_FILE]:
-        if not os.path.exists(file):
-            raise Exception('Expected to find file "{}" in project root.'
-                            .format(file))
+    if file_exists(EMP_FILE):
+        print('Adding Faculty/Staff to Koha patron CSV.')
+        with open(EMP_FILE, 'r') as file:
+            employees = json.load(file)["Report_Entry"]
+            # open in append mode & don't add header row
+            with open(OUT_FILE, 'a') as output:
+                writer = csv.DictWriter(output, fieldnames=koha_fields)
+                for employee in employees:
+                    row = make_employee_row(employee)
+                    if row:
+                        writer.writerow(row)
 
-    global prox_map
-    prox_map = create_prox_map(PROX_FILE)
 
-    OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
-    koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
-                   'dateexpiry', 'email', 'firstname', 'patron_attributes',
-                   'surname', 'userid', 'phone' ]
-
-    print('Adding students to Koha patron CSV.')
-    with open(STU_FILE, 'r') as file:
-        students = json.load(file)["Report_Entry"]
-        with open(OUT_FILE, 'w') as output:
-            writer = csv.DictWriter(output, fieldnames=koha_fields)
-            writer.writeheader()
-            for stu in students:
-                row = make_student_row(stu)
-                if row:
-                    writer.writerow(row)
-
-    print('Adding Faculty/Staff to Koha patron CSV.')
-    with open(EMP_FILE, 'r') as file:
-        employees = json.load(file)["Report_Entry"]
-        # open in append mode & don't add header row
-        with open(OUT_FILE, 'a') as output:
-            writer = csv.DictWriter(output, fieldnames=koha_fields)
-            for employee in employees:
-                row = make_employee_row(employee)
-                if row:
-                    writer.writerow(row)
+def main():
+    # write header row
+    with open(OUT_FILE, 'w+') as output:
+        writer = csv.DictWriter(output, fieldnames=koha_fields)
+        writer.writeheader()
+    proc_students()
+    proc_students(pc=True)
+    proc_staff()
 
     print('Done! Upload the CSV at '
     'https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
-    path = input('Where would you like to archive the data files? (e.g. '
-                 'data/2023FA) ')
-    if path.strip() != '' and path.strip().lower() != 'n':
-        # ensure directory exists
-        if not os.path.isdir(path):
-            try:
-                os.mkdir(path)
-            except PermissionError:
-                warn('Unable to create directory at path "{}".'.format(path))
-                exit(1)
-
-        for name in [STU_FILE, EMP_FILE, PROX_FILE, OUT_FILE]:
-            os.renames(name, os.path.join(path, name))
-    else:
-        print('Files were not archived.')
 
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='Create Koha CSV 1.0')
+    PROX_FILE = args['<prox_report.csv>']
+    if not file_exists(PROX_FILE):
+        exit(1)
+    prox_map = create_prox_map(PROX_FILE)
+    OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
+    koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
+                   'dateexpiry', 'email', 'firstname', 'patron_attributes',
+                   'surname', 'userid', 'phone', 'borrowernotes' ]
     main()
