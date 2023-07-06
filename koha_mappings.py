@@ -4,6 +4,7 @@ category = {
     "Faculty": "FACULTY",
     "Graduate": "GRAD",
     "Instructors": "SPECIALFAC",
+    "Pre-College": "SPECIALSTU",
     "Staff": "STAFF",
     "Undergraduate": "UNDERGRAD",
 }
