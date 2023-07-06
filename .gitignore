@@ -2,3 +2,5 @@ data/*
 !data/koha_starter.csv
 config.py
 .tmp.drive*
+employee_data.json
+student_data.json
