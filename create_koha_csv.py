@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+Usage: create_koha_csv.py prox_report.csv -s YYYY
+
 This script takes JSON data from Workday and maps it into a format appropriate
 for import into Koha. We run it once per semester just prior to the semester's
 start. Note that a few things should be manually checked:
