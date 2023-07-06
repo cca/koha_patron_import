@@ -20,6 +20,7 @@ fac_depts = {
     "All Faculty": None,
     "Animation": 3,
     "Architecture": 1,
+    "Atelier Instructor": "b",
     "Business Office": "a",
     # I think this name is defunct...
     "Center for Art and Public Life": 9,

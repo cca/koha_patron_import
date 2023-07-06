@@ -159,9 +159,13 @@ def make_employee_row(person):
     # skip inactive special programs faculty
     if person["job_profile"] == "Special Programs Instructor (inactive)":
         return None
+    # skip contingent employees
+    if person["etype"] == "Contingent Employees/Contractors":
+        return None
     # we assume etype=Instructors => special programs faculty
     if (person["etype"] == "Instructors"
         and person["job_profile"] != "Special Programs Instructor"
+        and person["job_profile"] != "Atelier Instructor"
         and person["job_profile"] not in fac_depts):
         warn(('Instructor {} is not a Special Programs Instructor, check '
                'record.').format(person["username"]))
