@@ -33,7 +33,7 @@ Before each semester, we load new patron accounts using data sourced from Workda
 
 1. Download JSON files from Google Cloud to the root of this project e.g. `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. The script expects them to retain their names, "student_data.json" and "employee_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs") and save it as "Accounts with Prox IDs.csv" in the root of this project.
 
-1. Check that there are no new student majors not represented in "koha_mappings.py". I wrote a shell script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) to parse the employee/student data and write all major/department values to text files in the data directory. You can diff the results of this against its last iteration to find any new or modified values.
+1. Check that there are no new student majors not represented in "koha_mappings.py". The script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) parses the employee/student data and writes all major/department values to text files in the data directory, then it tries to `git diff` against its own prior iterations.
 
 1. Run the main script `python create_koha_csv.py -s 2021-12-14` where the `-s` parameter is the last day of the semester (see Portal's [Academic Calendar](https://portal.cca.edu/calendar)). The due dates for all account types (staff, student, faculty) are calculated based on this date. The script prints diagnostic messages for users with ambiguous accounts, often hourly or special programs instructors. We need to double check that these accounts either already exist or aren't needed.
 
