@@ -35,7 +35,7 @@ Before each semester, we load new patron accounts using data sourced from Workda
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". The script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) parses the employee/student data and writes all major/department values to text files in the data directory, then it tries to `git diff` against its own prior iterations.
 
-1. Run the main script `python create_koha_csv.py prox_report.csv --end 2023-12-12` where the CSV is Prox report and the `--end` parameter is the last day of the semester (see Portal's [Academic Calendar](https://portal.cca.edu/calendar)). Due dates for all account types (staff, student, faculty) are based on this date. The script prints diagnostic messages for users with ambiguous accounts, often hourly or special programs instructors. We need to double check that these accounts either already exist or aren't needed.
+1. Run the main script `python create_koha_csv.py prox_report.csv --end 2023-12-12` where the CSV is Prox report and the `--end` parameter is the last day of the semester (see Portal's [Academic Calendar](https://portal.cca.edu/calendar)). Expiration dates for all account types (staff, student, faculty) are based on this. The script prints diagnostic messages for users with ambiguous accounts, often hourly or special programs instructors. We need to double check that these accounts either already exist or aren't needed.
 
 1. In Koha's staff side, select **Tools** & then **[Import Patrons](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl)**. Use the following settings:
 
