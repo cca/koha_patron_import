@@ -1,47 +1,40 @@
 #!/usr/bin/env python
 """
-Usage: create_koha_csv.py prox_report.csv -s YYYY
+Usage:
+    create_koha_csv.py <prox_report.csv> --end <YYYY-MM-DD>
+
+Options:
+    --end=DATE  last day of the semester in YYYY-MM-DD format
 
 This script takes JSON data from Workday and maps it into a format appropriate
 for import into Koha. We run it once per semester just prior to the semester's
 start. Note that a few things should be manually checked:
 
-    - ensure mappings (patron category, student major) haven't changed
+    Ensure mappings (patron category, student major) haven't changed
         (see koha_mappings.py and new-programs.sh)
-    - look up last day of the semester (this is the expiration date, captured
+    Look up last day of the semester (this is the expiration date, captured
         in the "-s" flag when the script is run)
 """
-import argparse
 import csv
 from datetime import date, timedelta
 import json
 import os
 
+from docopt import docopt
 from termcolor import colored
 
 from koha_mappings import category, fac_depts, stu_major
+from koha_patron.utils import trim_first_two_lines
 
 today = date.today()
 
 
-def strip_first_n_lines(filename, n=0):
-    index = 0
-    with open(filename, 'r+') as fh:
-        while index < n:
-            fh.readline()
-            index += 1
-        data = fh.read()
-        fh.seek(0)
-        fh.write(data)
-        fh.truncate()
-
-
 def create_prox_map(proxfile):
-    # Prox report CSV is invalid with a title line & an empty line, we strip
-    # the header row too or else conversion to int() below breaks
-    strip_first_n_lines(proxfile, 3)
+    # Prox report CSV is invalid with a title line & an empty line
+    trim_first_two_lines(proxfile, 'List of Changed Secondary Account Numbers')
     with open(proxfile, mode='r') as infile:
         reader = csv.reader(infile)
+        next(reader) # skip header row
         # Universal ID => prox number mapping
         # Numbers in prox report have a varying number of leading zeroes, e.g.
         # "001000001", "010000001", so we strip them out
@@ -67,7 +60,7 @@ def make_student_row(student):
         "cardnumber": prox_map.get(student["universal_id"],
                                    student["universal_id"]).strip(),
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args.semester_end,
+        "dateexpiry": args['--end'],
         "email": student["inst_email"],
         "firstname": student["first_name"],
         "patron_attributes": "UNIVID:{},STUID:{}".format(
@@ -126,7 +119,7 @@ def expiration_date(person):
                'will be assigned the Staff expiration date.'
                .format(person["username"])))
         type = 'Staff'
-    d = date.fromisoformat(args.semester_end)
+    d = date.fromisoformat(args['--end'])
     if type == 'Staff' or type == 'Instructors':
         # go into next month then subtract the number of days from next month
         next_mo = d.replace(day=28) + timedelta(days=4)
@@ -210,7 +203,7 @@ def make_employee_row(person):
 def main():
     EMP_FILE = 'employee_data.json'
     STU_FILE = 'student_data.json'
-    PROX_FILE = 'Accounts with Prox IDs.csv'
+    PROX_FILE = args['<prox_report.csv>']
     for file in [EMP_FILE, STU_FILE, PROX_FILE]:
         if not os.path.exists(file):
             raise Exception('Expected to find file "{}" in project root.'
@@ -249,7 +242,7 @@ def main():
     print('Done! Upload the CSV at '
     'https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
     path = input('Where would you like to archive the data files? (e.g. '
-                 'data/2019FA) ')
+                 'data/2023FA) ')
     if path.strip() != '' and path.strip().lower() != 'n':
         # ensure directory exists
         if not os.path.isdir(path):
@@ -266,9 +259,6 @@ def main():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Convert Workday JSON into Koha patron import CSV')
-    parser.add_argument('-s', '--semester-end', type=str, required=True,
-                        help='Last day of the semester in YYYY-MM-DD format')
-    args = parser.parse_args()
+    args = docopt(__doc__, version='Create Koha CSV 1.0')
+    print(args)
     main()
