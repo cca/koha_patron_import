@@ -17,7 +17,19 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 1. Obtain access to the "Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
 
-## Details
+## Sync Card Number Changes
+
+On a regular basis, we can sync card number changes from the TouchNet report to Koha, so that patrons who lost or changed their CCA ID cards will be able to use the library without updating their account.
+
+1. Download the latest report of prox numbers from TouchNet
+
+1. Run `pipenv run ./patch_prox_num.py new_prox_report.csv data.json old_prox_report.csv | tee -a prox_update.log` where data.json is one of the (employee or student) Workday data exports. The old prox report is optional but greatly speeds up the process (because we don't have to check the Koha API for every card number).
+
+1. The script prints status messages, a summary of what was updated and possible problems, and creates a JSON file of patrons who are missing from Koha (which could then be used in the step below).
+
+## Loading New Patrons
+
+Before each semester, we load new patron accounts using data sourced from Workday to create a CSV that's then batch loaded into Koha.
 
 1. Download JSON files from Google Cloud to the root of this project e.g. `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. The script expects them to retain their names, "student_data.json" and "employee_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs") and save it as "Accounts with Prox IDs.csv" in the root of this project.
 

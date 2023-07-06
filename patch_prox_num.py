@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Usage: patch_prox_num.py <prox> <jsonfile> [<old_prox>]
 
