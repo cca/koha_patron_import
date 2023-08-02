@@ -89,8 +89,56 @@ def no_prox(wd):
           f"""universal ID {wd['universal_id']} and no prox number""")
 
 
+def prox_changed(workday, prox):
+    """ we have a new or changed prox number for a patron, try to find their
+    Koha account and pass the new prox num to update_patron(koha, wd, prox)
+
+    Args:
+        workday (dict): Workday object of personal info
+        prox (int): card number
+    """
+    response = http.get('{}/patrons?userid={}'.format(
+        config['api_root'],
+        workday['username'],
+    ))
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        log_http_error(response, workday, prox)
+    patrons = response.json()
+
+    # patrons is a dict if we had an error above, list otherwise
+    if type(patrons) == list:
+        if len(patrons) == 0:
+            missing_patron(workday)
+        elif len(patrons) == 1:
+            update_patron(patrons[0], workday, prox)
+        else:
+            # multiple patrons returned (e.g. look at results for userid = nchan
+            # which is a substring of another username)
+            patrons = [p for p in patrons if p['userid'] == workday['username']]
+            if len(patrons) == 0:
+                missing_patron(workday)
+            elif len(patrons) == 1:
+                update_patron(patrons[0], workday, prox)
+
+
 def is_contractor(wd):
     return wd.get('etype', None) == 'Contingent Employees/Contractors' or wd.get('job_profile', None) == 'Temporary System/Campus Access' or False
+
+
+def mk_missing_file(missing):
+    """ write missing patrons to JSON file so we can add them later
+
+    Args:
+        missing (list): list of workday people objects
+    """
+    mfilename = f'{date.today().isoformat()}-missing-patrons.json'
+    # filter out temp/contractor positions
+    missing = [m for m in missing if not is_contractor(m)]
+    with open(mfilename, 'w') as file:
+        json.dump(missing, file, indent=2)
+        print(f"Wrote {len(missing)} missing patrons to {mfilename}")
 
 
 def main(arguments):
@@ -120,42 +168,11 @@ def main(arguments):
             if old_prox_map and old_prox_map.get(workday['universal_id'], None) == prox:
                 prox_unchanged(workday)
             else:
-                # @TODO this long passage needs to be split into fns badly
-                response = http.get('{}/patrons?userid={}'.format(
-                    config['api_root'],
-                    workday['username'],
-                ))
-                try:
-                    response.raise_for_status()
-                except HTTPError:
-                    log_http_error(response, workday, prox)
-                patrons = response.json()
-
-                # patrons is a dict if we had an error above, list otherwise
-                if type(patrons) == list:
-                    if len(patrons) == 0:
-                        missing_patron(workday)
-
-                    elif len(patrons) == 1:
-                        update_patron(patrons[0], workday, prox)
-
-                    else:
-                        # multiple patrons returned (e.g. look at results for userid = nchan
-                        # which is a substring of another username)
-                        patrons = [p for p in patrons if p['userid'] == workday['username']]
-                        if len(patrons) == 0:
-                            missing_patron(workday)
-                        elif len(patrons) == 1:
-                            update_patron(patrons[0], workday, prox)
+                prox_changed(workday, prox)
 
     if len(missing) > 0:
-        # write missing patrons to a file so we can add them later
-        mfilename = f'{date.today().isoformat()}-missing-patrons.json'
-        # filter out temp/contractor positions
-        missing = [m for m in missing if not is_contractor(m)]
-        with open(mfilename, 'w') as file:
-            json.dump(missing, file, indent=2)
-            print(f"Wrote {len(missing)} missing patrons to {mfilename}")
+        mk_missing_file(missing)
+
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='Patch Prox Number 1.0')
