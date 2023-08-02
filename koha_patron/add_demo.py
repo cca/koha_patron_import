@@ -4,7 +4,7 @@ import urllib3
 import requests
 
 from koha_mappings import category
-from koha_patron.config import config
+from .config import config
 
 
 # ByWater's SSL cert causes problems so every request has verify=False
