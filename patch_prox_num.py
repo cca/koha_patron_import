@@ -21,12 +21,33 @@ from koha_patron.request_wrapper import request_wrapper
 
 
 def create_prox_map(proxfile):
-    # this assumes a nicely formed CSV with a single header row & no prologue
-    # @TODO check the file for the prologue & remove it if present
-    with open(proxfile, mode='r') as infile:
-        reader = csv.reader(infile)
-        # skip header row
-        next(reader)
+    """ Create a dict of { CCA ID : prox number } so we can look up patrons'
+    card numbers by their ID. Prox report does not have other identifiers like
+    username or email so we use CCA (universal, not student) ID.
+
+    Args:
+        proxfile (str|Path): path to the prox report CSV
+
+    Raises:
+        RuntimeError: if the CSV is not in the expected format
+
+    Returns:
+        dict: map of CCA IDs to prox numbers
+    """
+    with open(proxfile, mode='r') as file:
+        # check the first line, which we'll always skip, to ensure CSV format
+        first_line = file.readline()
+        if "List of Changed Secondary Account Numbers" in first_line:
+            # skip the first 3 lines ("List of", empty line, then header row)
+            file.readline()
+            file.readline()
+        elif '"Universal ID","Prox ID","Student ID","Last Name","First Name"' in first_line:
+            # we have already skipped the header row
+            pass
+        else:
+            raise RuntimeError(f'The CSV of prox numbers "{proxfile}" was in an unexpected format. It should be a CSV export from OneCard either unmodified or with the two preamble rows removed but the header row present. Double-check the format of the file.')
+        # read rows from the rest of the CSV
+        reader = csv.reader(file)
         # Universal ID => prox number mapping
         # Prox report Univ IDs have varying number of leading zeroes e.g.
         # "001000001", "010000001", so we strip them
