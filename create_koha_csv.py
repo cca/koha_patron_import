@@ -161,7 +161,7 @@ def make_employee_row(person):
     if person["job_profile"] == "Special Programs Instructor (inactive)":
         return None
     # skip contingent employees
-    if person["etype"] == "Contingent Employees/Contractors":
+    if person["is_contingent"] == "1":
         return None
     # we assume etype=Instructors => special programs faculty
     if (person["etype"] == "Instructors"
