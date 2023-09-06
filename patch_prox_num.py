@@ -118,7 +118,7 @@ def prox_changed(workday, prox):
         workday (dict): Workday object of personal info
         prox (int): card number
     """
-    response = http.get('{}/patrons?userid={}'.format(
+    response = http.get('{}/patrons?userid={}&_match=exact'.format(
         config['api_root'],
         workday['username'],
     ))
