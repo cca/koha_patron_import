@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """
-Usage: patch_prox_num.py <prox> <jsonfile> [<old_prox>]
+Usage: patch_prox_num.py <prox> <jsonfile>
 
 Iterates over the user accounts in the provided JSON file (which can be a
-student or employee export from Workday) and, if their prox number isn't in
-Koha, adds it. If you provide a previous iteration of the prox number report
-then the script will only check the Koha record if we have a new prox number.
+student or employee export from Workday) and checks their prox number against
+their cardnumber in Koha. If the numbers differ, updates the patron record.
 """
 import csv
 from datetime import date
@@ -42,7 +41,7 @@ def create_prox_map(proxfile):
             file.readline()
             file.readline()
         elif '"Universal ID","Prox ID","Student ID","Last Name","First Name"' in first_line:
-            # we have already skipped the header row
+            # we already skipped the header row
             pass
         else:
             raise RuntimeError(f'The CSV of prox numbers "{proxfile}" was in an unexpected format. It should be a CSV export from OneCard either unmodified or with the two preamble rows removed but the header row present. Double-check the format of the file.')
@@ -110,9 +109,9 @@ def no_prox(wd):
           f"""universal ID {wd['universal_id']} and no prox number""")
 
 
-def prox_changed(workday, prox):
-    """ we have a new or changed prox number for a patron, try to find their
-    Koha account and pass the new prox num to update_patron(koha, wd, prox)
+def check_prox(workday, prox):
+    """ Try to find Koha account given WD profile. If cardnumber and prox don't
+    match, pass the new prox num to update_patron(koha, wd, prox).
 
     Args:
         workday (dict): Workday object of personal info
@@ -133,14 +132,9 @@ def prox_changed(workday, prox):
         if len(patrons) == 0:
             missing_patron(workday)
         elif len(patrons) == 1:
-            update_patron(patrons[0], workday, prox)
-        else:
-            # multiple patrons returned (e.g. look at results for userid = nchan
-            # which is a substring of another username)
-            patrons = [p for p in patrons if p['userid'] == workday['username']]
-            if len(patrons) == 0:
-                missing_patron(workday)
-            elif len(patrons) == 1:
+            if patrons[0]["cardnumber"] == prox:
+                prox_unchanged(workday)
+            else:
                 update_patron(patrons[0], workday, prox)
 
 
@@ -167,43 +161,38 @@ def main(arguments):
     global missing
     missing = []
     global totals
-    totals = { "missing": 0, "error": 0, "updated": 0, "no prox": 0}
+    totals = {
+        "missing": 0,
+        "error": 0,
+        "updated": 0,
+        "no prox": 0,
+        "prox unchanged": 0
+    }
     global http
     http = request_wrapper()
 
     prox_map = create_prox_map(arguments['<prox>'])
-    if arguments['<old_prox>']:
-        old_prox_map = create_prox_map(arguments['<old_prox>'])
-        totals["prox unchanged"] = 0
 
     with open(arguments['<jsonfile>'], 'r') as file:
         people = json.load(file)["Report_Entry"]
 
-    # uncomment the next line to test on just Libraries staff
-    # people = [p for p in people if p.get('department', None) == 'Libraries']
     for workday in people:
         if not workday['universal_id'] in prox_map:
             no_prox(workday)
         else:
-            prox = prox_map[workday['universal_id']]
-            if old_prox_map and old_prox_map.get(workday['universal_id'], None) == prox:
-                prox_unchanged(workday)
-            else:
-                prox_changed(workday, prox)
+            check_prox(workday, prox_map[workday['universal_id']])
 
     if len(missing) > 0:
         mk_missing_file(missing)
 
 
 if __name__ == '__main__':
-    arguments = docopt(__doc__, version='Patch Prox Number 1.0')
+    arguments = docopt(__doc__, version='Patch Prox Number 1.1')
     main(arguments)
     print(f"""
 Summary:
-    - Updated Patrons: {totals["updated"]}
-    - No Prox number: {totals["no prox"]}
-    - Missing from Koha: {totals["missing"]}
-    - Errors: {totals["error"]}""")
-    if totals.get("prox unchanged", False):
-        print(f"""\
+    - Updated Patrons: {totals['updated']}
+    - No Prox number: {totals['no prox']}
+    - Missing from Koha: {totals['missing']}
+    - Errors: {totals['error']}
     - Prox unchanged: {totals['prox unchanged']}""")
