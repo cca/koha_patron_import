@@ -23,7 +23,7 @@ On a regular basis, we can sync card number changes from the TouchNet report to 
 
 1. Download the latest report of prox numbers from TouchNet
 
-1. Run `pipenv run ./patch_prox_num.py new_prox_report.csv data.json old_prox_report.csv | tee -a prox_update.log` where data.json is one of the (employee or student) Workday data exports. The old prox report is optional but greatly speeds up the process (because we don't have to check the Koha API for every card number).
+1. Run `pipenv run ./patch_prox_num.py prox_report.csv data.json | tee -a prox_update.log` where data.json is one of the (employee or student) Workday data exports.
 
 1. The script prints status messages, a summary of what was updated and possible problems, and creates a JSON file of patrons who are missing from Koha (which could then be used in the step below).
 
