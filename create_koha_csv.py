@@ -51,7 +51,17 @@ def warn(string):
     print(colored("Warning: " + string, "red"))
 
 
+def is_exception(user):
+    exceptions = ["deborahstein", "sraffeld"]
+    if user["username"] in exceptions:
+        return True
+    return False
+
+
 def make_student_row(student):
+    if is_exception(student):
+        return None
+
     # some students don't have CCA emails, skip them
     # one student record in Summer 2021 lacked a last_name
     if student.get("inst_email") is None or student.get("last_name") is None:
@@ -153,6 +163,9 @@ def expiration_date(person):
 
 
 def make_employee_row(person):
+    if is_exception(person):
+        return None
+
     # skip 1) people who are inactive (usually hire date hasn't arrived yet),
     # 2) people w/o emails, 3) the one random record for a student
     if (
