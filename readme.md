@@ -6,12 +6,9 @@ CCA's outline of adding new patrons before the semester:
 - Use "create_koha_csv.py" to convert the Informer output into Koha's CSV schema
 - [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
 
-Formerly, we used separate scripts for faculty and student accounts. The data source was also Informer reports (for students) and SQL queries on the Portal database (for faculty), but now we use integrations data from Workday.
-
 ## Setup
 
-1. Set up a python virtual environment & install dependencies: `pipenv --three && pipenv shell
-&& pipenv install`
+1. Set up a python virtual environment & install dependencies: `pipenv install && pipenv shell`
 
 1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, and courses for recent terms.
 
@@ -19,7 +16,7 @@ Formerly, we used separate scripts for faculty and student accounts. The data so
 
 ## Sync Card Number Changes
 
-On a regular basis, we can sync card number changes from the TouchNet report to Koha, so that patrons who lost or changed their CCA ID cards will be able to use the library without updating their account.
+On a regular basis, we sync card number changes from the TouchNet report to Koha, so that patrons who lost or changed their CCA ID cards will be able to use the library without updating their account.
 
 1. Download the latest report of prox numbers from TouchNet
 

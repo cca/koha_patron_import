@@ -19,6 +19,7 @@ import csv
 from datetime import date, timedelta
 import json
 import os
+from typing import Any
 
 from docopt import docopt
 from termcolor import colored
@@ -31,20 +32,23 @@ today = date.today()
 
 def create_prox_map(proxfile):
     # Prox report CSV is invalid with a title line & an empty line
-    trim_first_two_lines(proxfile, 'List of Changed Secondary Account Numbers')
-    with open(proxfile, mode='r') as infile:
+    trim_first_two_lines(proxfile, "List of Changed Secondary Account Numbers")
+    with open(proxfile, mode="r") as infile:
         reader = csv.reader(infile)
-        next(reader) # skip header row
+        next(reader)  # skip header row
         # Universal ID => prox number mapping
         # Numbers in prox report have a varying number of leading zeroes, e.g.
         # "001000001", "010000001", so we strip them out
-        map = {rows[0].lstrip("0"): rows[1].lstrip("0") for rows in reader if
-               int(rows[1]) != 0}
+        map = {
+            rows[0].lstrip("0"): rows[1].lstrip("0")
+            for rows in reader
+            if int(rows[1]) != 0
+        }
         return map
 
 
 def warn(string):
-    print(colored('Warning: ' + string, 'red'))
+    print(colored("Warning: " + string, "red"))
 
 
 def make_student_row(student):
@@ -54,42 +58,46 @@ def make_student_row(student):
         return None
 
     patron = {
-        "branchcode": 'SF',
+        "branchcode": "SF",
         "categorycode": category[student["academic_level"]],
         # fill in Prox number if we have it, or default to UID
-        "cardnumber": prox_map.get(student["universal_id"],
-                                   student["universal_id"]).strip(),
+        "cardnumber": prox_map.get(
+            student["universal_id"], student["universal_id"]
+        ).strip(),
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args['--end'],
+        "dateexpiry": args["--end"],
         "email": student["inst_email"],
         "firstname": student["first_name"],
         "patron_attributes": "UNIVID:{},STUID:{}".format(
-            student["universal_id"], student["student_id"]),
-        "phone": student.get("phone", ''),
+            student["universal_id"], student["student_id"]
+        ),
+        "phone": student.get("phone", ""),
         "surname": student["last_name"],
         "userid": student["username"],
     }
 
     # note for pre-college and skip student major calculation
-    if student.get('academic_level') == 'Pre-College':
-        patron['borrowernotes'] = f'Pre-college {today.year}'
+    if student.get("academic_level") == "Pre-College":
+        patron["borrowernotes"] = f"Pre-college {today.year}"
     else:
         # handle student major (additional patron attribute)
         major = None
         if student["primary_program"] in stu_major:
             major = str(stu_major[student["primary_program"]])
-            patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
+            patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
         else:
             for program in student["programs"]:
                 if program["program"] in stu_major:
                     major = str(stu_major[program["program"]])
-                    patron["patron_attributes"] += ',STUDENTMAJ:{}'.format(major)
+                    patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
                     break
         # we couldn't find a major, print a warning
         if major is None:
-            warn(f"""Unable to parse major for student {student["username"]}
+            warn(
+                f"""Unable to parse major for student {student["username"]}
 Primary program: {student["primary_program"]}
-Program credentials: {student["programs"]}""")
+Program credentials: {student["programs"]}"""
+            )
 
     return patron
 
@@ -114,14 +122,17 @@ def expiration_date(person):
     """
     # there are 3 etypes: Staff, Instructors, Faculty. Sometimes we do not have
     # an etype but _do_ have a "future_etype".
-    type = person.get('etype') or person.get('etype_future')
+    type = person.get("etype") or person.get("etype_future")
     if not type:
-        warn(('Employee {} does not have an etype nor a etype_future. They '
-               'will be assigned the Staff expiration date.'
-               .format(person["username"])))
-        type = 'Staff'
-    d = date.fromisoformat(args['--end'])
-    if type == 'Staff' or type == 'Instructors':
+        warn(
+            (
+                "Employee {} does not have an etype nor a etype_future. They "
+                "will be assigned the Staff expiration date.".format(person["username"])
+            )
+        )
+        type = "Staff"
+    d = date.fromisoformat(args["--end"])
+    if type == "Staff" or type == "Instructors":
         # go into next month then subtract the number of days from next month
         next_mo = d.replace(day=28) + timedelta(days=4)
         return str(next_mo - timedelta(days=next_mo.day))
@@ -135,16 +146,20 @@ def expiration_date(person):
             return str(d.replace(year=d.year + 1, month=1, day=31))
         # @TODO how do we handle Summer?
         else:
-            raise Exception('Summer expiration dates for faculty not'
-                            ' implemented yet.')
+            raise Exception(
+                "Summer expiration dates for faculty not" " implemented yet."
+            )
     pass
 
 
 def make_employee_row(person):
     # skip 1) people who are inactive (usually hire date hasn't arrived yet),
     # 2) people w/o emails, 3) the one random record for a student
-    if (person["active_status"] == "0" or not person.get("work_email") or
-        person["etype"] == "Students"):
+    if (
+        person["active_status"] == "0"
+        or not person.get("work_email")
+        or person["etype"] == "Students"
+    ):
         return None
 
     # create a hybrid program/department field
@@ -164,26 +179,32 @@ def make_employee_row(person):
     if person["is_contingent"] == "1":
         return None
     # we assume etype=Instructors => special programs faculty
-    if (person["etype"] == "Instructors"
+    if (
+        person["etype"] == "Instructors"
         and person["job_profile"] != "Special Programs Instructor"
         and person["job_profile"] != "Atelier Instructor"
-        and person["job_profile"] not in fac_depts):
-        warn(('Instructor {} is not a Special Programs Instructor, check '
-               'record.').format(person["username"]))
+        and person["job_profile"] not in fac_depts
+    ):
+        warn(
+            (
+                "Instructor {} is not a Special Programs Instructor, check " "record."
+            ).format(person["username"])
+        )
 
     patron = {
-        "branchcode": 'SF',
+        "branchcode": "SF",
         "categorycode": category[person["etype"]],
         # fill in Prox number if we have it, or default to UID
-        "cardnumber": prox_map.get(person["universal_id"],
-                                   person["universal_id"]).strip(),
+        "cardnumber": prox_map.get(
+            person["universal_id"], person["universal_id"]
+        ).strip(),
         "dateenrolled": today.isoformat(),
         # @TODO this date varies by categorycode now
         "dateexpiry": expiration_date(person),
         "email": person["work_email"],
         "firstname": person["first_name"],
         "patron_attributes": "UNIVID:" + person["universal_id"],
-        "phone": person.get("phone", ''),
+        "phone": person.get("phone", ""),
         "surname": person["last_name"],
         "userid": person["username"],
     }
@@ -191,15 +212,22 @@ def make_employee_row(person):
     # handle faculty/staff department (additional patron attribute)
     if person["prodep"] and person["prodep"] in fac_depts:
         code = str(fac_depts[person["prodep"]])
-        patron["patron_attributes"] += ',FACDEPT:{}'.format(code)
+        patron["patron_attributes"] += ",FACDEPT:{}".format(code)
     elif person["prodep"]:
         # there's a non-empty program/department value we haven't accounted for
-        warn("""No mapping in koha_mappings.fac_depts for faculty/staff prodep
-        "{}", see patron {}""".format(person["prodep"], person["username"]))
+        warn(
+            """No mapping in koha_mappings.fac_depts for faculty/staff prodep
+        "{}", see patron {}""".format(
+                person["prodep"], person["username"]
+            )
+        )
 
     if person["prodep"] is None:
-        warn('Employee {} has no academic program or department:'
-              .format(person["username"]))
+        warn(
+            "Employee {} has no academic program or department:".format(
+                person["username"]
+            )
+        )
         print(person)
 
     return patron
@@ -207,24 +235,35 @@ def make_employee_row(person):
 
 def file_exists(fn):
     if not os.path.exists(fn):
-            warn(f'Did not find "{fn}" file')
-            return False
+        warn(f'Did not find "{fn}" file')
+        return False
     return True
+
+
+def get_users(data) -> list[dict[str, Any]]:
+    if type(data) == list:
+        return data
+    elif data.get("Report_Entry"):
+        return data["Report_Entry"]
+    else:
+        raise Exception(
+            "Could not find list of users in JSON data—are you sure this is the right file?"
+        )
 
 
 def proc_students(pc=False):
     if pc:
-        IN_FILE = 'student_pre_college_data.json'
-        prefix = ' pre-college '
+        IN_FILE = "student_pre_college_data.json"
+        prefix = " pre-college "
     else:
-        IN_FILE = 'student_data.json'
-        prefix = ' '
+        IN_FILE = "student_data.json"
+        prefix = " "
 
     if file_exists(IN_FILE):
-        print(f'Adding{prefix}students to Koha patron CSV.')
-        with open(IN_FILE, 'r') as file:
-            students = json.load(file)["Report_Entry"]
-            with open(OUT_FILE, 'a') as output:
+        print(f"Adding{prefix}students to Koha patron CSV.")
+        with open(IN_FILE, "r") as file:
+            students = get_users(json.load(file))
+            with open(OUT_FILE, "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for stu in students:
                     row = make_student_row(stu)
@@ -233,13 +272,13 @@ def proc_students(pc=False):
 
 
 def proc_staff():
-    EMP_FILE = 'employee_data.json'
+    EMP_FILE = "employee_data.json"
     if file_exists(EMP_FILE):
-        print('Adding Faculty/Staff to Koha patron CSV.')
-        with open(EMP_FILE, 'r') as file:
-            employees = json.load(file)["Report_Entry"]
+        print("Adding Faculty/Staff to Koha patron CSV.")
+        with open(EMP_FILE, "r") as file:
+            employees = get_users(json.load(file))
             # open in append mode & don't add header row
-            with open(OUT_FILE, 'a') as output:
+            with open(OUT_FILE, "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for employee in employees:
                     row = make_employee_row(employee)
@@ -249,25 +288,38 @@ def proc_staff():
 
 def main():
     # write header row
-    with open(OUT_FILE, 'w+') as output:
+    with open(OUT_FILE, "w+") as output:
         writer = csv.DictWriter(output, fieldnames=koha_fields)
         writer.writeheader()
     proc_students()
     proc_students(pc=True)
     proc_staff()
 
-    print('Done! Upload the CSV at '
-    'https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl')
+    print(
+        "Done! Upload the CSV at "
+        "https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl"
+    )
 
 
-if __name__ == '__main__':
-    args = docopt(__doc__, version='Create Koha CSV 1.0')
-    PROX_FILE = args['<prox_report.csv>']
+if __name__ == "__main__":
+    args = docopt(__doc__, version="Create Koha CSV 1.0")
+    PROX_FILE = args["<prox_report.csv>"]
     if not file_exists(PROX_FILE):
         exit(1)
     prox_map = create_prox_map(PROX_FILE)
-    OUT_FILE = str(today.isoformat()) + '-koha-patrons.csv'
-    koha_fields = ['branchcode', 'cardnumber', 'categorycode', 'dateenrolled',
-                   'dateexpiry', 'email', 'firstname', 'patron_attributes',
-                   'surname', 'userid', 'phone', 'borrowernotes' ]
+    OUT_FILE = str(today.isoformat()) + "-koha-patrons.csv"
+    koha_fields = [
+        "branchcode",
+        "cardnumber",
+        "categorycode",
+        "dateenrolled",
+        "dateexpiry",
+        "email",
+        "firstname",
+        "patron_attributes",
+        "surname",
+        "userid",
+        "phone",
+        "borrowernotes",
+    ]
     main()
