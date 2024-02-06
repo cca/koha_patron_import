@@ -30,7 +30,7 @@ from koha_patron.utils import trim_first_two_lines
 today = date.today()
 
 
-def create_prox_map(proxfile):
+def create_prox_map(proxfile) -> dict[str, str]:
     # Prox report CSV is invalid with a title line & an empty line
     trim_first_two_lines(proxfile, "List of Changed Secondary Account Numbers")
     with open(proxfile, mode="r") as infile:
@@ -47,18 +47,18 @@ def create_prox_map(proxfile):
         return map
 
 
-def warn(string):
+def warn(string) -> None:
     print(colored("Warning: " + string, "red"))
 
 
-def is_exception(user):
+def is_exception(user) -> bool:
     exceptions = ["deborahstein", "sraffeld"]
     if user["username"] in exceptions:
         return True
     return False
 
 
-def make_student_row(student):
+def make_student_row(student) -> dict | None:
     if is_exception(student):
         return None
 
@@ -112,7 +112,7 @@ Program credentials: {student["programs"]}"""
     return patron
 
 
-def expiration_date(person):
+def expiration_date(person) -> str:
     """Calculate patron expiration date based on personnel data and the last
     day of the semester.
 
@@ -154,15 +154,13 @@ def expiration_date(person):
         # Fall => Jan 31 of the following year
         if d.month == 12:
             return str(d.replace(year=d.year + 1, month=1, day=31))
-        # @TODO how do we handle Summer?
+        # TODO how do we handle Summer?
         else:
-            raise Exception(
-                "Summer expiration dates for faculty not" " implemented yet."
-            )
+            raise Exception("Summer expiration dates for faculty not implemented yet.")
     pass
 
 
-def make_employee_row(person):
+def make_employee_row(person) -> dict | None:
     if is_exception(person):
         return None
 
@@ -212,7 +210,7 @@ def make_employee_row(person):
             person["universal_id"], person["universal_id"]
         ).strip(),
         "dateenrolled": today.isoformat(),
-        # @TODO this date varies by categorycode now
+        # TODO this date varies by categorycode now
         "dateexpiry": expiration_date(person),
         "email": person["work_email"],
         "firstname": person["first_name"],
@@ -246,14 +244,14 @@ def make_employee_row(person):
     return patron
 
 
-def file_exists(fn):
+def file_exists(fn) -> bool:
     if not os.path.exists(fn):
         warn(f'Did not find "{fn}" file')
         return False
     return True
 
 
-def get_users(data) -> list[dict[str, Any]]:
+def get_users(data) -> list[dict]:
     if type(data) == list:
         return data
     elif data.get("Report_Entry"):
@@ -264,7 +262,7 @@ def get_users(data) -> list[dict[str, Any]]:
         )
 
 
-def proc_students(pc=False):
+def proc_students(pc=False) -> None:
     if pc:
         IN_FILE = "student_pre_college_data.json"
         prefix = " pre-college "
@@ -284,7 +282,7 @@ def proc_students(pc=False):
                         writer.writerow(row)
 
 
-def proc_staff():
+def proc_staff() -> None:
     EMP_FILE = "employee_data.json"
     if file_exists(EMP_FILE):
         print("Adding Faculty/Staff to Koha patron CSV.")
@@ -299,7 +297,7 @@ def proc_staff():
                         writer.writerow(row)
 
 
-def main():
+def main() -> None:
     # write header row
     with open(OUT_FILE, "w+") as output:
         writer = csv.DictWriter(output, fieldnames=koha_fields)
