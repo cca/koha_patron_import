@@ -164,13 +164,8 @@ def make_employee_row(person) -> dict | None:
     if is_exception(person):
         return None
 
-    # skip 1) people who are inactive (usually hire date hasn't arrived yet),
-    # 2) people w/o emails, 3) the one random record for a student
-    if (
-        person["active_status"] == "0"
-        or not person.get("work_email")
-        or person["etype"] == "Students"
-    ):
+    # skip people w/o emails & the one random record for a student
+    if not person.get("work_email") or person.get("etype") == "Students":
         return None
 
     # create a hybrid program/department field
@@ -180,21 +175,21 @@ def make_employee_row(person) -> dict | None:
         person["prodep"] = person["program"]
     elif person.get("department"):
         person["prodep"] = person["department"]
-    elif person["job_profile"] in fac_depts:
+    elif person.get("job_profile") in fac_depts:
         person["prodep"] = person["job_profile"]
 
     # skip inactive special programs faculty
-    if person["job_profile"] == "Special Programs Instructor (inactive)":
+    if person.get("job_profile") == "Special Programs Instructor (inactive)":
         return None
     # skip contingent employees
     if person["is_contingent"] == "1":
         return None
     # we assume etype=Instructors => special programs faculty
     if (
-        person["etype"] == "Instructors"
-        and person["job_profile"] != "Special Programs Instructor"
-        and person["job_profile"] != "Atelier Instructor"
-        and person["job_profile"] not in fac_depts
+        person.get("etype") == "Instructors"
+        and person.get("job_profile") != "Special Programs Instructor"
+        and person.get("job_profile") != "Atelier Instructor"
+        and person.get("job_profile") not in fac_depts
     ):
         warn(
             (
@@ -204,7 +199,7 @@ def make_employee_row(person) -> dict | None:
 
     patron = {
         "branchcode": "SF",
-        "categorycode": category[person["etype"]],
+        "categorycode": category[person.get("etype") or person.get("etype_future")],
         # fill in Prox number if we have it, or default to UID
         "cardnumber": prox_map.get(
             person["universal_id"], person["universal_id"]
