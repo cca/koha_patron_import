@@ -90,6 +90,7 @@ fac_depts = {
     "Writing": 7,
     "Writing & Literature": 7,
     "YASP Instructor": "b",
+    "Youth Programs & Continuing Education": "b",
 }
 
 # Codes are configured in Koha's Authorized Values:
