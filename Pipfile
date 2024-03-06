@@ -14,5 +14,9 @@ termcolor = "~=2.4"
 [requires]
 python_version = "3.11"
 
+[scripts]
+getdata = "python koha_patron/dl_int_json.py"
+getpcdata = "python koha_patron/dl_int_json.py --pc"
+
 [optional]
 gsutil = "*"

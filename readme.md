@@ -28,7 +28,7 @@ On a regular basis, we sync card number changes from the TouchNet report to Koha
 
 Before each semester, we load new patron accounts using data sourced from Workday to create a CSV that's then batch loaded into Koha.
 
-1. Download JSON files from Google Cloud to the root of this project `gsutil cp gs://int_files_source/employee_data.json . && gsutil cp gs://int_files_source/student_data.json .`. For a summer term, also download pre-college data `gsutil cp gs://integration-success/student_pre_college_data.json .`. The script expects the JSON files to retain their names, e.g. "student_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs").
+1. Download JSON files from Google Cloud with `pipenv run getdata`. For a summer term, get pre-college data too with `pipenv run getpcdata`. Our scripts expects the JSON files to retain their names, e.g. "student_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs"), its name doesn't matter.
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". The script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) parses the employee/student data and writes all major/department values to text files in the data directory, then it tries to `git diff` against its own prior iterations.
 
