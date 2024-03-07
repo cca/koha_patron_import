@@ -24,4 +24,13 @@ class Employee(BaseModel):
 
 
 class Student(BaseModel):
+    academic_level: Literal["Undergraduate", "Graduate"]
+    first_name: str
+    inst_email: Optional[EmailStr] = None
+    last_name: str
+    primary_program: str
+    # programs always have program, program_type, sometimes has credentials (but not for nondegree)
+    programs: list[dict[str, str]]
+    student_id: str
+    universal_id: str
     username: str

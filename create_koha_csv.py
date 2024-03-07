@@ -60,44 +60,44 @@ def is_exception(user: Employee | Student) -> bool:
 
 
 def make_student_row(student) -> dict | None:
+    student = Student(**student)
+
     if is_exception(student):
         return None
 
     # some students don't have CCA emails, skip them
     # one student record in Summer 2021 lacked a last_name
-    if student.get("inst_email") is None or student.get("last_name") is None:
+    if student.inst_email is None or student.last_name is None:
         return None
 
     patron = {
         "branchcode": "SF",
-        "categorycode": category[student["academic_level"]],
+        "categorycode": category[student.academic_level],
         # fill in Prox number if we have it, or default to UID
-        "cardnumber": prox_map.get(
-            student["universal_id"], student["universal_id"]
-        ).strip(),
+        "cardnumber": prox_map.get(student.universal_id, student.universal_id).strip(),
         "dateenrolled": today.isoformat(),
         "dateexpiry": args["--end"],
-        "email": student["inst_email"],
-        "firstname": student["first_name"],
+        "email": student.inst_email,
+        "firstname": student.first_name,
         "patron_attributes": "UNIVID:{},STUID:{}".format(
-            student["universal_id"], student["student_id"]
+            student.universal_id, student.student_id
         ),
-        "phone": student.get("phone", ""),
-        "surname": student["last_name"],
-        "userid": student["username"],
+        # "phone": student.get("phone", ""),
+        "surname": student.last_name,
+        "userid": student.username,
     }
 
     # note for pre-college and skip student major calculation
-    if student.get("academic_level") == "Pre-College":
+    if student.academic_level == "Pre-College":
         patron["borrowernotes"] = f"Pre-college {today.year}"
     else:
         # handle student major (additional patron attribute)
         major = None
-        if student["primary_program"] in stu_major:
-            major = str(stu_major[student["primary_program"]])
+        if student.primary_program in stu_major:
+            major = str(stu_major[student.primary_program])
             patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
         else:
-            for program in student["programs"]:
+            for program in student.programs:
                 if program["program"] in stu_major:
                     major = str(stu_major[program["program"]])
                     patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
@@ -105,9 +105,9 @@ def make_student_row(student) -> dict | None:
         # we couldn't find a major, print a warning
         if major is None:
             warn(
-                f"""Unable to parse major for student {student["username"]}
-Primary program: {student["primary_program"]}
-Program credentials: {student["programs"]}"""
+                f"""Unable to parse major for student {student.username}
+Primary program: {student.primary_program}
+Program credentials: {student.programs}"""
             )
 
     return patron
@@ -206,11 +206,10 @@ def make_employee_row(person) -> dict | None:
 
     patron = {
         "branchcode": "SF",
-        "categorycode": category[person.etype or person.etype_future],
+        "categorycode": category.get(person.etype or person.etype_future or "Staff"),
         # fill in Prox number if we have it, or default to UID
         "cardnumber": prox_map.get(person.universal_id, person.universal_id).strip(),
         "dateenrolled": today.isoformat(),
-        # TODO this date varies by categorycode now
         "dateexpiry": expiration_date(person),
         "email": person.work_email,
         "firstname": person.first_name,
