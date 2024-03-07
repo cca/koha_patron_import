@@ -18,14 +18,15 @@ start. Note that a few things should be manually checked:
 import csv
 from datetime import date, timedelta
 import json
+from math import prod
 import os
-from typing import Any
 
 from docopt import docopt
 from termcolor import colored
 
 from koha_mappings import category, fac_depts, stu_major
 from koha_patron.utils import trim_first_two_lines
+from workday.models import Employee, Student
 
 today = date.today()
 
@@ -51,9 +52,9 @@ def warn(string) -> None:
     print(colored("Warning: " + string, "red"))
 
 
-def is_exception(user) -> bool:
+def is_exception(user: Employee | Student) -> bool:
     exceptions = ["deborahstein", "sraffeld"]
-    if user["username"] in exceptions:
+    if user.username in exceptions:
         return True
     return False
 
@@ -112,7 +113,7 @@ Program credentials: {student["programs"]}"""
     return patron
 
 
-def expiration_date(person) -> str:
+def expiration_date(person: Employee) -> str:
     """Calculate patron expiration date based on personnel data and the last
     day of the semester.
 
@@ -132,17 +133,17 @@ def expiration_date(person) -> str:
     """
     # there are 3 etypes: Staff, Instructors, Faculty. Sometimes we do not have
     # an etype but _do_ have a "future_etype".
-    type = person.get("etype") or person.get("etype_future")
-    if not type:
+    etype = person.etype or person.etype_future
+    if not etype:
         warn(
             (
                 "Employee {} does not have an etype nor a etype_future. They "
-                "will be assigned the Staff expiration date.".format(person["username"])
+                "will be assigned the Staff expiration date.".format(person.username)
             )
         )
-        type = "Staff"
+        etype = "Staff"
     d = date.fromisoformat(args["--end"])
-    if type == "Staff" or type == "Instructors":
+    if etype == "Staff" or etype == "Instructors":
         # go into next month then subtract the number of days from next month
         next_mo = d.replace(day=28) + timedelta(days=4)
         return str(next_mo - timedelta(days=next_mo.day))
@@ -161,78 +162,80 @@ def expiration_date(person) -> str:
 
 
 def make_employee_row(person) -> dict | None:
+    person = Employee(**person)
+
     if is_exception(person):
         return None
 
-    # skip people w/o emails & the one random record for a student
-    if not person.get("work_email") or person.get("etype") == "Students":
+    # skip inactive, people w/o emails, & the one random record for a student
+    if (
+        not person.active_status
+        or not person.work_email
+        or person.etype in ("Contingent Employees/Contractors", "Students")
+    ):
         return None
 
     # create a hybrid program/department field
     # some people have neither (tend to be adjuncts or special programs staff)
-    person["prodep"] = None
-    if person.get("program"):
-        person["prodep"] = person["program"]
-    elif person.get("department"):
-        person["prodep"] = person["department"]
-    elif person.get("job_profile") in fac_depts:
-        person["prodep"] = person["job_profile"]
+    prodep = None
+    if person.program:
+        prodep = person.program
+    elif person.department:
+        prodep = person.department
+    elif person.job_profile in fac_depts:
+        prodep = person.job_profile
 
     # skip inactive special programs faculty
-    if person.get("job_profile") == "Special Programs Instructor (inactive)":
+    if person.job_profile == "Special Programs Instructor (inactive)":
         return None
     # skip contingent employees
-    if person["is_contingent"] == "1":
+    if person.is_contingent == "1":
         return None
     # we assume etype=Instructors => special programs faculty
     if (
-        person.get("etype") == "Instructors"
-        and person.get("job_profile") != "Special Programs Instructor"
-        and person.get("job_profile") != "Atelier Instructor"
-        and person.get("job_profile") not in fac_depts
+        person.etype == "Instructors"
+        and person.job_profile != "Special Programs Instructor"
+        and person.job_profile != "Atelier Instructor"
+        and person.job_profile not in fac_depts
     ):
         warn(
             (
                 "Instructor {} is not a Special Programs Instructor, check " "record."
-            ).format(person["username"])
+            ).format(person.username)
         )
 
     patron = {
         "branchcode": "SF",
-        "categorycode": category[person.get("etype") or person.get("etype_future")],
+        "categorycode": category[person.etype or person.etype_future],
         # fill in Prox number if we have it, or default to UID
-        "cardnumber": prox_map.get(
-            person["universal_id"], person["universal_id"]
-        ).strip(),
+        "cardnumber": prox_map.get(person.universal_id, person.universal_id).strip(),
         "dateenrolled": today.isoformat(),
         # TODO this date varies by categorycode now
         "dateexpiry": expiration_date(person),
-        "email": person["work_email"],
-        "firstname": person["first_name"],
-        "patron_attributes": "UNIVID:" + person["universal_id"],
-        "phone": person.get("phone", ""),
-        "surname": person["last_name"],
-        "userid": person["username"],
+        "email": person.work_email,
+        "firstname": person.first_name,
+        "patron_attributes": "UNIVID:" + person.universal_id,
+        "phone": person.work_phone,
+        "surname": person.last_name,
+        "userid": person.username,
     }
 
     # handle faculty/staff department (additional patron attribute)
-    if person["prodep"] and person["prodep"] in fac_depts:
-        code = str(fac_depts[person["prodep"]])
+    if prodep and prodep in fac_depts:
+        code = str(fac_depts[prodep])
         patron["patron_attributes"] += ",FACDEPT:{}".format(code)
-    elif person["prodep"]:
+    elif prodep:
         # there's a non-empty program/department value we haven't accounted for
         warn(
             """No mapping in koha_mappings.fac_depts for faculty/staff prodep
         "{}", see patron {}""".format(
-                person["prodep"], person["username"]
+                prodep, person.username
             )
         )
 
-    if person["prodep"] is None:
+    if prodep is None:
         warn(
-            "Employee {} has no academic program or department:".format(
-                person["username"]
-            )
+            "Employee {} has no academic program or department:".format(person.username)
         )
         print(person)
 
