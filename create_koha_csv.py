@@ -6,14 +6,19 @@ Usage:
 Options:
     --end=DATE  last day of the semester in YYYY-MM-DD format
 
-This script takes JSON data from Workday and maps it into a format appropriate
-for import into Koha. We run it once per semester just prior to the semester's
-start. Note that a few things should be manually checked:
+Converts JSON data from Workday into Koha patron import CSV. We run it once per
+semester just prior start. A couple things should be manually checked:
 
-    Ensure mappings (patron category, student major) haven't changed (see
-        koha_mappings.py and new-programs.sh)
-    Look up last day of the semester (expiration dates use this, captured in
-        the "--end" flag when the script is run)
+- Ensure mappings haven't changed (see koha_mappings.py and new-programs.sh)
+- Look up last day of the semester for --end flag
+
+The JSON files from Workday come from the integration-success bucket and the
+script expects them to be in the root and keep their names, but you can
+override them with the following environment variables:
+STUDENT_DATA=student_data.json
+PRECOLLEGE_DATA=student_pre_college_data.json
+EMPLOYEE_DATA=employee_data.json
+OUTPUT_FILE=YYYY-MM-DD-koha-patrons.csv
 """
 import csv
 from datetime import date, timedelta
@@ -29,6 +34,13 @@ from koha_patron.utils import trim_first_two_lines
 from workday.models import Employee, Student
 
 today = date.today()
+files = {
+    "student": os.environ.get("STUDENT_DATA", "student_data.json"),
+    "precollege": os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
+    "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
+    "output": os.environ.get("OUTPUT_FILE", f"{today.isoformat()}-koha-patrons.csv"),
+}
+print(files)
 
 
 def create_prox_map(proxfile) -> dict[str, str]:
@@ -261,17 +273,17 @@ def get_users(data) -> list[dict]:
 
 def proc_students(pc=False) -> None:
     if pc:
-        IN_FILE = "student_pre_college_data.json"
+        file = files["precollege"]
         prefix = " pre-college "
     else:
-        IN_FILE = "student_data.json"
+        file = files["student"]
         prefix = " "
 
-    if file_exists(IN_FILE):
+    if file_exists(file):
         print(f"Adding{prefix}students to Koha patron CSV.")
-        with open(IN_FILE, "r") as file:
+        with open(file, "r") as file:
             students = get_users(json.load(file))
-            with open(OUT_FILE, "a") as output:
+            with open(files["output"], "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for stu in students:
                     row = make_student_row(stu)
@@ -280,13 +292,12 @@ def proc_students(pc=False) -> None:
 
 
 def proc_staff() -> None:
-    EMP_FILE = "employee_data.json"
-    if file_exists(EMP_FILE):
+    if file_exists(files["employee"]):
         print("Adding Faculty/Staff to Koha patron CSV.")
-        with open(EMP_FILE, "r") as file:
+        with open(files["employee"], "r") as file:
             employees = get_users(json.load(file))
             # open in append mode & don't add header row
-            with open(OUT_FILE, "a") as output:
+            with open(files["output"], "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for employee in employees:
                     row = make_employee_row(employee)
@@ -296,7 +307,7 @@ def proc_staff() -> None:
 
 def main() -> None:
     # write header row
-    with open(OUT_FILE, "w+") as output:
+    with open(files["output"], "w+") as output:
         writer = csv.DictWriter(output, fieldnames=koha_fields)
         writer.writeheader()
     proc_students()
@@ -315,7 +326,7 @@ if __name__ == "__main__":
     if not file_exists(PROX_FILE):
         exit(1)
     prox_map = create_prox_map(PROX_FILE)
-    OUT_FILE = str(today.isoformat()) + "-koha-patrons.csv"
+    files["output"] = str(today.isoformat()) + "-koha-patrons.csv"
     koha_fields = [
         "branchcode",
         "cardnumber",
