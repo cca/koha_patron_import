@@ -19,6 +19,11 @@ from koha_patron.patron import PATRON_READ_ONLY_FIELDS
 from koha_patron.request_wrapper import request_wrapper
 
 
+# Universal IDs of patrons who should not have their prox numbers updated
+# e.g. because the prox report seems to have the wrong number for them
+PROX_EXCEPTIONS = ["1458769"]
+
+
 def create_prox_map(proxfile):
     """Create a dict of { CCA ID : prox number } so we can look up patrons'
     card numbers by their ID. Prox report does not have other identifiers like
@@ -202,10 +207,11 @@ def main(arguments):
         people = json.load(file)["Report_Entry"]
 
     for workday in people:
-        if not workday["universal_id"] in prox_map:
-            no_prox(workday)
-        else:
-            check_prox(workday, prox_map[workday["universal_id"]])
+        if not workday["universal_id"] in PROX_EXCEPTIONS:
+            if not workday["universal_id"] in prox_map:
+                no_prox(workday)
+            else:
+                check_prox(workday, prox_map[workday["universal_id"]])
 
     if len(missing) > 0:
         mk_missing_file(missing)
