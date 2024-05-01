@@ -200,7 +200,7 @@ def mk_missing_file(missing: list[Person]) -> None:
     filename = f"{date.today().isoformat()}-missing-patrons.json"
     with open(filename, "w") as file:
         json.dump(missing, file, indent=2)
-        print(f"Wrote {len(missing)} missing patrons to {filename}")
+        print(f"\nWrote {len(missing)} missing patrons to {filename}")
 
 
 def load_data(filename: Path) -> list[Person]:
