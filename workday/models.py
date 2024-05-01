@@ -10,6 +10,7 @@ etypes = Literal[
 class Employee(BaseModel):
     active_status: bool
     department: Optional[str] = None
+    employee_id: str
     etype_future: Optional[str] = None
     etype: Optional[etypes] = None
     first_name: str
@@ -34,3 +35,7 @@ class Student(BaseModel):
     student_id: str
     universal_id: str
     username: str
+
+
+# Just used for type hints
+Person = Employee | Student
