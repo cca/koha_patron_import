@@ -286,6 +286,9 @@ def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
         # skip temp/contractor positions
         if isinstance(person, Employee) and skipped_employee(person):
             continue
+        # skip incomplete students (username = id when they haven't chosen one yet)
+        if isinstance(person, Student) and person.username == person.student_id:
+            continue
         check_patron(person, prox_map.get(person.universal_id), dryrun=dry_run)
 
     if len(results["missing"]) > 0:
