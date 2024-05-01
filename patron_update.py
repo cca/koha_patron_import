@@ -1,30 +1,27 @@
 #!/usr/bin/env python
-"""
-Usage: patch_prox_num.py <prox> <jsonfile>
-
-Iterates over the user accounts in the provided JSON file (which can be a
-student or employee export from Workday) and checks their prox number against
-their cardnumber in Koha. If the numbers differ, updates the patron record.
-"""
 import csv
 from datetime import date
+import enum
 import json
+from pathlib import Path
 
-from docopt import docopt
+import click
+from requests import Session, Response
 from requests.exceptions import HTTPError
 from termcolor import colored
 
 from koha_patron.config import config
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
 from koha_patron.request_wrapper import request_wrapper
-
+from workday.models import Employee, Student, Person
 
 # Universal IDs of patrons who should not have their prox numbers updated
 # e.g. because the prox report seems to have the wrong number for them
-PROX_EXCEPTIONS = ["1458769"]
+PROX_EXCEPTIONS: list[str] = ["1458769"]
+NAME_EXCEPTIONS: list[str] = []  # not needed yet
 
 
-def create_prox_map(proxfile):
+def create_prox_map(proxfile: Path) -> dict[str, str]:
     """Create a dict of { CCA ID : prox number } so we can look up patrons'
     card numbers by their ID. Prox report does not have other identifiers like
     username or email so we use CCA (universal, not student) ID.
@@ -60,7 +57,7 @@ def create_prox_map(proxfile):
         # Universal ID => prox number mapping
         # Prox report Univ IDs have varying number of leading zeroes e.g.
         # "001000001", "010000001", so we strip them
-        map = {
+        map: dict[str, str] = {
             rows[0].lstrip("0"): rows[1].lstrip("0").rstrip()
             for rows in reader
             if int(rows[1]) != 0
@@ -68,164 +65,234 @@ def create_prox_map(proxfile):
         return map
 
 
-def log_http_error(response, workday, prox):
-    """log info about HTTP error"""
-    totals["error"] += 1
-    print(colored("Error", "red"), response)
-    print("HTTP Response Headers", response.headers)
-    print(response.text)
-    print(
-        colored(
-            f"""Error for patron {workday['username']} """
-            f"""({workday['first_name']} {workday['last_name']}) with prox """
-            f"""number {prox}"""
-        ),
-        "red",
-    )
-
-
-def update_patron(koha, workday, prox):
-    print(
-        f"""Updating cardnumber for {koha['userid']} ({koha['firstname']} """
-        f"""{koha['surname']}, borrowernumber {koha['patron_id']})"""
-    )
-
-    # backup old cardnumber in "sort2" field
-    koha["statistics_2"] = koha["cardnumber"]
-    # koha['phone'] = koha['phone'] or workday.get('work_phone') or workday.get('mobile_phone', '')
-    koha["cardnumber"] = prox
-    # must do this or PUT request fails b/c we can't edit these fields
-    for field in PATRON_READ_ONLY_FIELDS:
-        koha.pop(field, None)
-
-    response = http.put(
-        "{}/patrons/{}".format(
-            config["api_root"],
-            koha["patron_id"],
-        ),
-        json=koha,
-    )
-
+def handle_http_error(response: Response, workday: Person, prox: str | None) -> None:
     try:
         response.raise_for_status()
     except HTTPError:
-        log_http_error(response, workday, prox)
-        return False
+        """log info about HTTP error"""
+        results["totals"]["error"] += 1
+        print(colored("Error", "red"), response)
+        print("HTTP Response Headers", response.headers)
+        print(response.text)
+        print(
+            colored(
+                f"""Error for patron {workday.username} """
+                f"""({workday.first_name} {workday.last_name}) with prox """
+                f"""number {prox}"""
+            ),
+            "red",
+        )
 
-    totals["updated"] += 1
-    return True
+
+def missing_patron(workday: dict) -> None:
+    print(f'Could not find a patron with a userid of {workday["username"]} in Koha.')
+    results["totals"]["missing"] += 1
+    results["missing"].append(workday)
 
 
-def missing_patron(workday):
-    totals["missing"] += 1
-    print(
-        'Could not find any patrons with a userid of "{}"'.format(workday["username"])
+def has_changed(koha: dict, workday: Person, prox: str | None) -> bool:
+    return (
+        (prox and koha["cardnumber"] != prox)
+        or koha["firstname"] != workday.first_name
+        or koha["surname"] != workday.last_name
     )
-    missing.append(workday)
 
 
-def prox_unchanged(wd):
-    totals["prox unchanged"] += 1
-    print(
-        f"Prox number unchanged for {wd['first_name']} {wd['last_name']} ({wd['username']})"
+def skipped_employee(wd: Employee) -> bool:
+    return (
+        wd.etype == "Contingent Employees/Contractors"
+        or wd.job_profile == "Temporary System/Campus Access"
+        or wd.job_profile == "Temporary: Hourly"
+        or False
     )
 
 
-def no_prox(wd):
-    totals["no prox"] += 1
-    print(
-        f"""{wd['first_name']} {wd['last_name']} ({wd['username']}) has """
-        f"""universal ID {wd['universal_id']} and no prox number"""
-    )
-
-
-def check_prox(workday, prox):
-    """Try to find Koha account given WD profile. If cardnumber and prox don't
-    match, pass the new prox num to update_patron(koha, wd, prox).
+def check_patron(workday: Person, prox: str | None, dryrun: bool):
+    """Try to find Koha account given WD profile.
+    If cardnumber or name have changed,
+    pass the new prox num to update_patron(koha, wd, prox).
 
     Args:
         workday (dict): Workday object of personal info
         prox (int): card number
     """
-    response = http.get(
+    response: Response = http.get(
         "{}/patrons?userid={}&_match=exact".format(
             config["api_root"],
-            workday["username"],
+            workday.username,
         )
     )
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        log_http_error(response, workday, prox)
-    patrons = response.json()
+    handle_http_error(response, workday, prox)
+    patrons: list | dict = response.json()
 
     # patrons is a dict if we had an error above, list otherwise
-    if type(patrons) == list:
+    if isinstance(patrons, list):
         if len(patrons) == 0:
-            missing_patron(workday)
+            missing_patron(workday.model_dump(mode="json"))
         elif len(patrons) == 1:
-            if patrons[0]["cardnumber"] == prox:
-                prox_unchanged(workday)
+            if has_changed(patrons[0], workday, prox):
+                update_patron(patrons[0], workday, prox, dryrun)
             else:
-                update_patron(patrons[0], workday, prox)
+                results["totals"]["unchanged"] += 1
+        else:
+            # theoretically impossible with _match=exact
+            raise RuntimeError(
+                f"Multiple patrons found for username {workday.username}: {patrons}"
+            )
 
 
-def is_contractor(wd):
-    return (
-        wd.get("etype", None) == "Contingent Employees/Contractors"
-        or wd.get("job_profile", None) == "Temporary System/Campus Access"
-        or False
-    )
+def update_patron(koha: dict, workday: Person, prox: str | None, dryrun: bool) -> None:
+    print(f"Updating patron {koha['userid']}", end=" ")
+
+    # name change
+    if (
+        koha["firstname"] != workday.first_name
+        or koha["surname"] != workday.last_name
+        and workday.universal_id not in NAME_EXCEPTIONS
+    ):
+        print(
+            f"{koha['firstname']} {koha['surname']} => {workday.first_name} {workday.last_name}",
+            end=" ",
+        )
+        koha["firstname"] = workday.first_name
+        koha["surname"] = workday.last_name
+        results["totals"]["name change"] += 1
+    else:
+        print(f"{koha['firstname']} {koha['surname']}", end=" ")
+
+    # new prox number
+    if (
+        prox
+        and koha["cardnumber"] != prox
+        and workday.universal_id not in PROX_EXCEPTIONS
+    ):
+        print(f"Cardnumber {koha['cardnumber']} => {prox}")
+        # backup old cardnumber in "sort2" field
+        koha["statistics_2"] = koha["cardnumber"]
+        koha["cardnumber"] = prox
+        results["totals"]["prox change"] += 1
+    else:
+        print("Cardnumber", koha["cardnumber"])
+
+    # must do this or PUT request fails b/c we can't edit these fields
+    for field in PATRON_READ_ONLY_FIELDS:
+        koha.pop(field, None)
+
+    if not dryrun:
+        response: Response = http.put(
+            "{}/patrons/{}".format(
+                config["api_root"],
+                koha["patron_id"],
+            ),
+            json=koha,
+        )
+        handle_http_error(response, workday, prox)
+
+    results["totals"]["updated"] += 1
 
 
-def mk_missing_file(missing):
+def mk_missing_file(missing: list[Person]) -> None:
     """write missing patrons to JSON file so we can add them later
 
     Args:
         missing (list): list of workday people objects
     """
-    mfilename = f"{date.today().isoformat()}-missing-patrons.json"
-    # filter out temp/contractor positions
-    missing = [m for m in missing if not is_contractor(m)]
-    with open(mfilename, "w") as file:
+    filename = f"{date.today().isoformat()}-missing-patrons.json"
+    with open(filename, "w") as file:
         json.dump(missing, file, indent=2)
-        print(f"Wrote {len(missing)} missing patrons to {mfilename}")
+        print(f"Wrote {len(missing)} missing patrons to {filename}")
 
 
-def main(arguments):
+def load_data(filename: Path) -> list[Person]:
+    people_dicts: list[dict] = []
+    with open(filename, "r") as file:
+        data = json.load(file)
+        if data.get("Report_Entry"):
+            people_dicts = data["Report_Entry"]
+        else:
+            people_dicts = data
+
+        if people_dicts[0].get("employee_id"):
+            return [Employee(**p) for p in people_dicts]
+        elif people_dicts[0].get("student_id"):
+            return [Student(**p) for p in people_dicts]
+        else:
+            raise RuntimeError(
+                f"Could not determine the type of person from the first entry in the JSON file {filename}."
+            )
+
+
+def summary(totals: dict[str, int]) -> None:
+    # Print summary of changes
+    print(
+        f"""
+=== Summary ===
+- Total patrons: {totals['unchanged'] + totals['updated'] + totals['missing']}
+- Errors: {totals['error']}
+- Missing from Koha: {totals['missing']}
+- Unchanged: {totals['unchanged']}
+- Updated: {totals['updated']}
+- Name changes: {totals['name change']}
+- Cardnumber changes: {totals['prox change']}"""
+    )
+
+
+@click.command()
+@click.help_option("--help", "-h")
+@click.option(
+    "-w", "--workday", help="Workday JSON file", required=True, type=click.Path()
+)
+@click.option("-p", "--prox", help="Prox CSV file", type=click.Path())
+@click.option(
+    "-d",
+    "--dry-run",
+    help="Do not update patrons, only check for changes",
+    is_flag=True,
+)
+@click.option("-l", "--limit", help="Limit the number of patrons to check", type=int)
+def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
     # global vars that other functions need to access
-    global missing
-    missing = []
-    global totals
-    totals = {"missing": 0, "error": 0, "updated": 0, "no prox": 0, "prox unchanged": 0}
+    global results
+    results = {
+        "missing": [],
+        "totals": {
+            "missing": 0,
+            "error": 0,
+            "updated": 0,
+            "unchanged": 0,
+            "name change": 0,
+            "prox change": 0,
+        },
+    }
     global http
     http = request_wrapper()
 
-    prox_map = create_prox_map(arguments["<prox>"])
+    if prox:
+        prox_map: dict[str, str] = create_prox_map(prox)
+    else:
+        print(
+            colored("No prox file provided, cardnumbers will not be updated.", "yellow")
+        )
+        prox_map = {}
 
-    with open(arguments["<jsonfile>"], "r") as file:
-        people = json.load(file)["Report_Entry"]
+    if dry_run:
+        print(colored("Dry run: no changes will be made.", "yellow"))
 
-    for workday in people:
-        if not workday["universal_id"] in PROX_EXCEPTIONS:
-            if not workday["universal_id"] in prox_map:
-                no_prox(workday)
-            else:
-                check_prox(workday, prox_map[workday["universal_id"]])
+    data: list[Person] = load_data(workday)
 
-    if len(missing) > 0:
-        mk_missing_file(missing)
+    for i, person in enumerate(data):
+        if limit and i >= limit:
+            break
+        # skip temp/contractor positions
+        if isinstance(person, Employee) and skipped_employee(person):
+            continue
+        check_patron(person, prox_map.get(person.universal_id), dryrun=dry_run)
+
+    if len(results["missing"]) > 0:
+        mk_missing_file(results["missing"])
+
+    summary(results["totals"])
 
 
 if __name__ == "__main__":
-    arguments = docopt(__doc__, version="Patch Prox Number 1.1")
-    main(arguments)
-    print(
-        f"""
-Summary:
-    - Updated Patrons: {totals['updated']}
-    - No Prox number: {totals['no prox']}
-    - Missing from Koha: {totals['missing']}
-    - Errors: {totals['error']}
-    - Prox unchanged: {totals['prox unchanged']}"""
-    )
+    main()
