@@ -4,14 +4,15 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pytest = "==8.0.2"
+pytest = "~=8.2"
 
 [packages]
 requests = "~=2.31"
 docopt = "~=0.6"
 termcolor = "~=2.4"
-pydantic = "==2.6.3"
-email-validator = "==2.1.1"
+pydantic = "~=2.7"
+email-validator = "~=2.1"
+click = "~=8.1"
 
 [requires]
 python_version = "3.11"
