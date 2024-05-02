@@ -40,7 +40,6 @@ files = {
     "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
     "output": os.environ.get("OUTPUT_FILE", f"{today.isoformat()}-koha-patrons.csv"),
 }
-print(files)
 
 
 def create_prox_map(proxfile) -> dict[str, str]:
