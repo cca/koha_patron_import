@@ -25,7 +25,7 @@ class Employee(BaseModel):
 
 
 class Student(BaseModel):
-    academic_level: Literal["Undergraduate", "Graduate"]
+    academic_level: Literal["Undergraduate", "Graduate", "Pre-College"]
     first_name: str
     inst_email: Optional[EmailStr] = None
     last_name: str
