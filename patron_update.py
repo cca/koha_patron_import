@@ -14,6 +14,7 @@ from koha_patron.config import config
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
 from koha_patron.request_wrapper import request_wrapper
 from workday.models import Employee, Student, Person
+from workday.utils import get_entries
 
 # Universal IDs of patrons who should not have their prox numbers updated
 # e.g. because the prox report seems to have the wrong number for them
@@ -206,11 +207,7 @@ def mk_missing_file(missing: list[Person]) -> None:
 def load_data(filename: Path) -> list[Person]:
     people_dicts: list[dict] = []
     with open(filename, "r") as file:
-        data = json.load(file)
-        if data.get("Report_Entry"):
-            people_dicts = data["Report_Entry"]
-        else:
-            people_dicts = data
+        people_dicts = get_entries(json.load(file))
 
         if people_dicts[0].get("employee_id"):
             return [Employee(**p) for p in people_dicts]

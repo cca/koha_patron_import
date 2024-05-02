@@ -15,10 +15,10 @@ semester just prior start. A couple things should be manually checked:
 The JSON files from Workday come from the integration-success bucket and the
 script expects them to be in the root and keep their names, but you can
 override them with the following environment variables:
-STUDENT_DATA=student_data.json
-PRECOLLEGE_DATA=student_pre_college_data.json
-EMPLOYEE_DATA=employee_data.json
-OUTPUT_FILE=YYYY-MM-DD-koha-patrons.csv
+    STUDENT_DATA=student_data.json
+    PRECOLLEGE_DATA=student_pre_college_data.json
+    EMPLOYEE_DATA=employee_data.json
+    OUTPUT_FILE=YYYY-MM-DD-koha-patrons.csv
 """
 import csv
 from datetime import date, timedelta
@@ -32,6 +32,7 @@ from termcolor import colored
 from koha_mappings import category, fac_depts, stu_major
 from koha_patron.utils import trim_first_two_lines
 from workday.models import Employee, Student
+from workday.utils import get_entries
 
 today = date.today()
 files = {
@@ -259,17 +260,6 @@ def file_exists(fn) -> bool:
     return True
 
 
-def get_users(data) -> list[dict]:
-    if type(data) == list:
-        return data
-    elif data.get("Report_Entry"):
-        return data["Report_Entry"]
-    else:
-        raise Exception(
-            "Could not find list of users in JSON data—are you sure this is the right file?"
-        )
-
-
 def proc_students(pc=False) -> None:
     if pc:
         file = files["precollege"]
@@ -281,7 +271,7 @@ def proc_students(pc=False) -> None:
     if file_exists(file):
         print(f"Adding{prefix}students to Koha patron CSV.")
         with open(file, "r") as file:
-            students = get_users(json.load(file))
+            students = get_entries(json.load(file))
             with open(files["output"], "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for stu in students:
@@ -294,7 +284,7 @@ def proc_staff() -> None:
     if file_exists(files["employee"]):
         print("Adding Faculty/Staff to Koha patron CSV.")
         with open(files["employee"], "r") as file:
-            employees = get_users(json.load(file))
+            employees = get_entries(json.load(file))
             # open in append mode & don't add header row
             with open(files["output"], "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
