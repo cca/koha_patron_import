@@ -20,6 +20,7 @@ python_version = "3.11"
 [scripts]
 getdata = "python koha_patron/dl_int_json.py"
 getpcdata = "python koha_patron/dl_int_json.py --pc"
+test = "pytest koha_patron workday"
 
 [optional]
 gsutil = "*"
