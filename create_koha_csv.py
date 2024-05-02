@@ -18,7 +18,7 @@ override them with the following environment variables:
     STUDENT_DATA=student_data.json
     PRECOLLEGE_DATA=student_pre_college_data.json
     EMPLOYEE_DATA=employee_data.json
-    OUTPUT_FILE=YYYY-MM-DD-koha-patrons.csv
+    OUTPUT_FILE=patron_bulk_import.csv
 """
 import csv
 from datetime import date, timedelta
@@ -39,7 +39,7 @@ files = {
     "student": os.environ.get("STUDENT_DATA", "student_data.json"),
     "precollege": os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
     "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
-    "output": os.environ.get("OUTPUT_FILE", f"{today.isoformat()}-koha-patrons.csv"),
+    "output": os.environ.get("OUTPUT_FILE", f"patron_bulk_import.csv"),
 }
 
 
@@ -315,7 +315,6 @@ if __name__ == "__main__":
     if not file_exists(PROX_FILE):
         exit(1)
     prox_map = create_prox_map(PROX_FILE)
-    files["output"] = str(today.isoformat()) + "-koha-patrons.csv"
     koha_fields = [
         "branchcode",
         "cardnumber",
