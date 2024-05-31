@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 import csv
 from datetime import date
-import enum
 import json
 from pathlib import Path
 
 import click
-from requests import Session, Response
+from requests import Response
 from requests.exceptions import HTTPError
 from termcolor import colored
 
@@ -177,7 +176,7 @@ def update_patron(koha: dict, workday: Person, prox: str | None, dryrun: bool) -
 
     # must do this or PUT request fails b/c we can't edit these fields
     for field in PATRON_READ_ONLY_FIELDS:
-        koha.pop(field, None)
+        koha.pop(field)
 
     if not dryrun:
         response: Response = http.put(

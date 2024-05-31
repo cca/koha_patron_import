@@ -23,7 +23,6 @@ override them with the following environment variables:
 import csv
 from datetime import date, timedelta
 import json
-from math import prod
 import os
 
 from docopt import docopt
