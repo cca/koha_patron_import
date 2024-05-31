@@ -55,7 +55,13 @@ We could use a script similar to koha_patron/add_demo.py (WIP) to add patrons to
 
 The API previously had a limitation that patron extended attributes could not be created nor modified. We use attributes to record student major and faculty department, so that curbed the API's usefulness. Luckily, a new `/patron/{id}/extended_attributes` route (see [bug #23666](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=23666)) was added in Koha 21.05. We use the API in the "patron_update.py" script to update existing patron records with their prox numbers without overwriting them entirely.
 
-If you do the logical thing of `GET`ting a patron record from the API, modifying it, then `PUT`ting it back, Koha throws an error if because there are read-only fields in the record. Remove them before sending the record back; see `koha_patron.PATRON_READ_ONLY_FIELDS`.
+If we do the logical thing of `GET`ting a patron record from the API, modifying it, then `PUT`ting it back, Koha throws an error because there are read-only fields in the record. Remove them before sending the record back:
+
+```py
+from koha_patron.patron import PATRON_READ_ONLY_FIELDS
+for field in PATRON_READ_ONLY_FIELDS:
+    patron.pop(field) # patron = dict of the patron record
+```
 
 ## LICENSE
 
