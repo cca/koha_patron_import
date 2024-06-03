@@ -154,10 +154,13 @@ def expiration_date(person: Employee) -> str:
         )
         etype = "Staff"
     d = date.fromisoformat(args["--end"])
-    if etype == "Staff" or etype == "Instructors":
+    if etype == "Instructors":
         # go into next month then subtract the number of days from next month
         next_mo = d.replace(day=28) + timedelta(days=4)
         return str(next_mo - timedelta(days=next_mo.day))
+    elif etype == "Staff":
+        # one year from now
+        return str(today.replace(year=today.year + 1))
     else:
         # implies faculty
         # Spring => May 31
