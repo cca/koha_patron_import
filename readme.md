@@ -20,7 +20,7 @@ On a regular basis, we sync names from Workday and card number changes from the 
 
 1. Download the latest report of prox numbers from TouchNet
 1. Download Workday JSON files from Google Cloud with `pipenv run getdata`
-1. Run `pipenv run ./patron_update.py prox_report.csv data.json | tee -a prox_update.log` where data.json is one of the (employee or student) Workday files.
+1. Run `pipenv run ./patron_update.py -p prox_report.csv -w data.json | tee -a prox_update.log` where data.json is one of the (employee or student) Workday files.
 1. The script prints status messages, a summary of what was updated, and creates a JSON file of patrons who are missing from Koha (which can be used in the step below).
 
 ## Loading New Patrons
@@ -53,7 +53,7 @@ Koha has a REST API with a `/patrons` endpoint. Read its documentation at https:
 
 We could use a script similar to koha_patron/add_demo.py (WIP) to add patrons to Koha one-by-one with the API rather than in bulk with a CSV. Rather than use two scripts, patron_update.py could simply create missing patrons on the fly.
 
-The API previously had a limitation that patron extended attributes could not be created nor modified. We use attributes to record student major and faculty department, so that curbed the API's usefulness. Luckily, a new `/patron/{id}/extended_attributes` route (see [bug #23666](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=23666)) was added in Koha 21.05. We use the API in the "patron_update.py" script to update existing patron records with their prox numbers without overwriting them entirely.
+The API previously had a limitation that patron extended attributes could not be created nor modified. We use attributes to record student major and faculty department, so that curbed the API's usefulness. Luckily, a new `/patron/{id}/extended_attributes` route (see [bug #23666](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=23666)) was added in Koha 21.05. We use the API in the "patron_update.py" script to update existing patron records without overwriting them entirely.
 
 If we do the logical thing of `GET`ting a patron record from the API, modifying it, then `PUT`ting it back, Koha throws an error because there are read-only fields in the record. Remove them before sending the record back:
 
