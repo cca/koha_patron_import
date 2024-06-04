@@ -153,7 +153,7 @@ def expiration_date(person: Employee) -> str:
             )
         )
         etype = "Staff"
-    d = date.fromisoformat(args["--end"])
+    d: date = date.fromisoformat(args["--end"])
     if etype == "Instructors":
         # go into next month then subtract the number of days from next month
         next_mo = d.replace(day=28) + timedelta(days=4)
@@ -166,12 +166,17 @@ def expiration_date(person: Employee) -> str:
         # Spring => May 31
         if d.month == 5:
             return str(d.replace(day=31))
+        # Summer => Aug 31
+        elif d.month == 8:
+            return str(d.replace(day=31))
         # Fall => Jan 31 of the following year
-        if d.month == 12:
+        elif d.month == 12:
             return str(d.replace(year=d.year + 1, month=1, day=31))
-        # TODO how do we handle Summer?
         else:
-            raise Exception("Summer expiration dates for faculty not implemented yet.")
+            warn(
+                f"""End date {args['--end']} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will given the Staff expiration date of one year."""
+            )
+            return str(today.replace(year=today.year + 1))
     pass
 
 
@@ -208,8 +213,12 @@ def make_employee_row(person) -> dict | None:
     # we assume etype=Instructors => special programs faculty
     if (
         person.etype == "Instructors"
-        and person.job_profile != "Special Programs Instructor"
-        and person.job_profile != "Atelier Instructor"
+        and person.job_profile
+        not in (
+            "Atelier Instructor",
+            "Special Programs Instructor",
+            "YASP & Atelier Youth Programs Instructor",
+        )
         and person.job_profile not in fac_depts
     ):
         warn(
