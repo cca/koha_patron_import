@@ -9,8 +9,8 @@ category = {
     "Undergraduate": "UNDERGRAD",
 }
 
-# Koha faculty departments, roughly align with CCA divisions
-# Values in use (as of 9/2017) are:
+# Koha staff departments and faculty programs. Academic programs are roughly
+# aligned with CCA divisions Values in use (as of 9/2017) are:
 # 1: Architecture, 2: Design, 3: Fine Arts, 4: H&S/Critical Studies,
 # 5: Visual Studies (undergrad), 6: Visual Critical Studies (grad),
 # 7: Writing & Comics, 8: Wattis, 9: CAPL, 10: First Year, a: Administrative,
@@ -35,6 +35,7 @@ fac_depts = {
     "Critical Ethnic Studies": 4,
     "Critical Studies": 4,
     "Curatorial Practice": 3,
+    "DEIB": "a",
     "Design": 2,
     "Design MBA": 2,
     "Diversity Studies": 4,
