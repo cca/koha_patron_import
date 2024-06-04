@@ -191,13 +191,13 @@ def update_patron(koha: dict, workday: Person, prox: str | None, dryrun: bool) -
     results["totals"]["updated"] += 1
 
 
-def mk_missing_file(missing: list[Person]) -> None:
+def mk_missing_file(missing: list[Person], ptype: str) -> None:
     """write missing patrons to JSON file so we can add them later
 
     Args:
         missing (list): list of workday people objects
     """
-    filename = f"{date.today().isoformat()}-missing-patrons.json"
+    filename = f"{date.today().isoformat()}-missing-{ptype.lower()}s.json"
     with open(filename, "w") as file:
         json.dump(missing, file, indent=2)
         print(f"\nWrote {len(missing)} missing patrons to {filename}")
@@ -288,7 +288,7 @@ def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
         check_patron(person, prox_map.get(person.universal_id), dryrun=dry_run)
 
     if len(results["missing"]) > 0:
-        mk_missing_file(results["missing"])
+        mk_missing_file(results["missing"], type(data[0]).__name__)
 
     summary(results["totals"])
 
