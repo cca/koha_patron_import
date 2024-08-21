@@ -78,9 +78,9 @@ def handle_http_error(response: Response, workday: Person, prox: str | None) -> 
             colored(
                 f"""Error for patron {workday.username} """
                 f"""({workday.first_name} {workday.last_name}) with prox """
-                f"""number {prox}"""
-            ),
-            "red",
+                f"""number {prox}""",
+                "red",
+            )
         )
 
 
