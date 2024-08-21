@@ -18,7 +18,7 @@ click = "~=8.1"
 python_version = "3.11"
 
 [scripts]
-clean = 'bash -c "rm employee_data.json student_data.json student_pre_college_data.json patron_bulk_import.csv 2>/dev/null ; echo deleted files"'
+clean = 'bash -c "echo DELETING DATA FILES:; TODAY=$(date "+%Y-%m-%d") rm -v employee_data.json student_data.json student_pre_college_data.json patron_bulk_import.csv data/prox.csv ${TODAY}*.json 2>/dev/null"'
 getdata = "python koha_patron/dl_int_json.py"
 getpcdata = "python koha_patron/dl_int_json.py --pc"
 test = "pytest koha_patron workday"
