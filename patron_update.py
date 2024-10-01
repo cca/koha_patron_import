@@ -38,12 +38,12 @@ def create_prox_map(proxfile: Path) -> dict[str, str]:
     with open(proxfile, mode="r") as file:
         # check the first line, which we'll always skip, to ensure CSV format
         first_line = file.readline()
-        if "List of Changed Secondary Account Numbers" in first_line:
+        if "Active Accounts with Prox IDs" in first_line:
             # skip the first 3 lines ("List of", empty line, then header row)
             file.readline()
             file.readline()
         elif (
-            '"Universal ID","Prox ID","Student ID","Last Name","First Name"'
+            '"Universal ID","Student ID","Prox ID","Last Name","First Name","End Date","IsInactive"'
             in first_line
         ):
             # we already skipped the header row
@@ -57,11 +57,11 @@ def create_prox_map(proxfile: Path) -> dict[str, str]:
         # Universal ID => prox number mapping
         # Prox report Univ IDs have varying number of leading zeroes e.g.
         # "001000001", "010000001", so we strip them
-        map: dict[str, str] = {
-            rows[0].lstrip("0"): rows[1].lstrip("0").rstrip()
-            for rows in reader
-            if int(rows[1]) != 0
-        }
+        map: dict[str, str] = {}
+        for row in reader:
+            prox = row[2].lstrip("0").rstrip()
+            if prox != "" and int(prox) != 0:
+                map[row[0].lstrip("0")] = prox
         return map
 
 
