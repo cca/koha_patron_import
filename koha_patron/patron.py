@@ -11,11 +11,13 @@ class Patron(SimpleNamespace):
     def __init__(self, patron_id):
         self.patron_id = patron_id
         if patron_id is None:
-            raise Exception("Cannot instantiate Patron object without a Patron ID parameter.")
+            raise Exception(
+                "Cannot instantiate Patron object without a Patron ID parameter."
+            )
         self.get()
 
     def __repr__(self):
-        return '{} {} ({})'.format(self.firstname, self.surname, self.patron_id)
+        return "{} {} ({})".format(self.firstname, self.surname, self.patron_id)
 
     def remove_readonly_fields(self):
         # utility method, we must do this before attempting write API operations
@@ -26,20 +28,21 @@ class Patron(SimpleNamespace):
 
     def delete(self):
         http = request_wrapper()
-        response = http.delete('{}/patrons/{}'.format(
-            config['api_root'],
-            self.patron_id
-        ))
+        response = http.delete(
+            "{}/patrons/{}".format(config["api_root"], self.patron_id)
+        )
         response.raise_for_status()
         return self
 
     def get(self):
         # sync local object with Koha data from API, used in __init__
         http = request_wrapper()
-        response = http.get('{}/patrons/{}'.format(
-            config['api_root'],
-            self.patron_id,
-        ))
+        response = http.get(
+            "{}/patrons/{}".format(
+                config["api_root"],
+                self.patron_id,
+            )
+        )
         response.raise_for_status()
         for key, value in response.json().items():
             setattr(self, key, value)
@@ -48,10 +51,11 @@ class Patron(SimpleNamespace):
     def get_attributes(self):
         # get all extended attributes
         http = request_wrapper()
-        response = http.get('{}/patrons/{}/extended_attributes'.format(
-            config['api_root'],
-            self.patron_id
-        ))
+        response = http.get(
+            "{}/patrons/{}/extended_attributes".format(
+                config["api_root"], self.patron_id
+            )
+        )
         response.raise_for_status()
         self.extended_attributes = response.json()
         return self
@@ -59,9 +63,12 @@ class Patron(SimpleNamespace):
     def update(self):
         # sync local object to Koha
         http = request_wrapper()
-        response = http.put('{}/patrons/{}'.format(
-            config['api_root'],
-            self.patron_id,
-        ), json=self.remove_readonly_fields())
+        response = http.put(
+            "{}/patrons/{}".format(
+                config["api_root"],
+                self.patron_id,
+            ),
+            json=self.remove_readonly_fields(),
+        )
         response.raise_for_status()
         return self

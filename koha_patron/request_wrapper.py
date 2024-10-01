@@ -16,9 +16,9 @@ def request_wrapper():
         global token
         token = get_token()
     headers = {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
+        "Accept": "application/json",
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json",
     }
     session = requests.Session()
     session.verify = False

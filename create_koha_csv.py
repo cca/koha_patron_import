@@ -321,7 +321,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    args = docopt(__doc__, version="Create Koha CSV 1.0")
+    args = docopt(__doc__, version="Create Koha CSV 1.0")  # type: ignore
     PROX_FILE = args["<prox_report.csv>"]
     if not file_exists(PROX_FILE):
         exit(1)

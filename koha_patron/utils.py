@@ -1,5 +1,6 @@
 import re
 
+
 def trim_first_two_lines(file_name, string):
     with open(file_name, "r") as f:
         lines = f.readlines()

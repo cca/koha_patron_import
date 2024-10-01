@@ -1,4 +1,5 @@
 """ create patron record via Koha REST API """
+
 import urllib3
 
 import requests
@@ -13,22 +14,23 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_oauth_token():
-    """ Acquire an OAuth token for Koha
+    """Acquire an OAuth token for Koha
 
-    returns: OAuth token (string) """
+    returns: OAuth token (string)"""
     data = {
         "client_id": config["client_id"],
         "client_secret": config["client_secret"],
         "grant_type": "client_credentials",
     }
-    response = requests.post(config['api_root'] + '/oauth/token',
-                             data=data, verify=False)
-    token = str(response.json()['access_token'])
+    response = requests.post(
+        config["api_root"] + "/oauth/token", data=data, verify=False
+    )
+    token = str(response.json()["access_token"])
     return token
 
 
 def add_patron(patron, token=None):
-    """ Create a Koha Patron using the API
+    """Create a Koha Patron using the API
 
     patron: dict describing patron. Required to contain surname, address, city,
     library_id, category_id properties. We almost always want to add firstname,
@@ -41,13 +43,14 @@ def add_patron(patron, token=None):
         token = get_oauth_token()
 
     headers = {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
+        "Accept": "application/json",
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json",
     }
     # @TODO try/except block to work around OAuth token expiring
-    response = requests.post(config['api_root'] + '/patrons',
-                             json=patron, headers=headers, verify=False)
+    response = requests.post(
+        config["api_root"] + "/patrons", json=patron, headers=headers, verify=False
+    )
     return response
 
 
