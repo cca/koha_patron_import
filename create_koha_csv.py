@@ -29,7 +29,7 @@ from docopt import docopt
 from termcolor import colored
 
 from koha_mappings import category, fac_depts, stu_major
-from koha_patron.utils import trim_first_two_lines
+from patron_update import create_prox_map
 from workday.models import Employee, Student
 from workday.utils import get_entries
 
@@ -40,23 +40,6 @@ files = {
     "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
     "output": os.environ.get("OUTPUT_FILE", f"patron_bulk_import.csv"),
 }
-
-
-def create_prox_map(proxfile) -> dict[str, str]:
-    # Prox report CSV is invalid with a title line & an empty line
-    trim_first_two_lines(proxfile, "List of Changed Secondary Account Numbers")
-    with open(proxfile, mode="r") as infile:
-        reader = csv.reader(infile)
-        next(reader)  # skip header row
-        # Universal ID => prox number mapping
-        # Numbers in prox report have a varying number of leading zeroes, e.g.
-        # "001000001", "010000001", so we strip them out
-        map = {
-            rows[0].lstrip("0"): rows[1].lstrip("0")
-            for rows in reader
-            if int(rows[1]) != 0
-        }
-        return map
 
 
 def warn(string) -> None:
