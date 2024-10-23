@@ -59,7 +59,8 @@ def create_prox_map(proxfile: Path) -> dict[str, str]:
         # "001000001", "010000001", so we strip them
         map: dict[str, str] = {}
         for row in reader:
-            prox = row[2].lstrip("0").rstrip()
+            # normalize IDs to be last 5 digits
+            prox = row[2].rstrip()[4:]
             if prox != "" and int(prox) != 0:
                 map[row[0].lstrip("0")] = prox
         return map
