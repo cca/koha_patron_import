@@ -118,10 +118,7 @@ def check_patron(workday: Person, prox: str | None, dryrun: bool):
         prox (int): card number
     """
     response: Response = http.get(
-        "{}/patrons?userid={}&_match=exact".format(
-            config["api_root"],
-            workday.username,
-        )
+        f"{config['api_root']}/patrons?userid={workday.username}&_match=exact"
     )
     handle_http_error(response, workday, prox)
     patrons: list | dict = response.json()
