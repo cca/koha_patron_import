@@ -227,7 +227,6 @@ def summary(totals: dict[str, int]) -> None:
 - Total patrons: {totals['unchanged'] + totals['updated'] + totals['missing']}
 - Errors: {totals['error']}
 - Missing from Koha: {totals['missing']}
-- Unchanged: {totals['unchanged']}
 - Updated: {totals['updated']}
 - Name changes: {totals['name change']}
 - Cardnumber changes: {totals['prox change']}"""
