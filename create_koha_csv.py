@@ -24,17 +24,18 @@ import csv
 from datetime import date, timedelta
 import json
 import os
+from typing import Any
 
 from docopt import docopt
 from termcolor import colored
 
 from koha_mappings import category, fac_depts, stu_major
 from patron_update import create_prox_map
-from workday.models import Employee, Student
+from workday.models import Employee, Person, Student
 from workday.utils import get_entries
 
-today = date.today()
-files = {
+today: date = date.today()
+files: dict[str, str] = {
     "student": os.environ.get("STUDENT_DATA", "student_data.json"),
     "precollege": os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
     "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
@@ -46,15 +47,15 @@ def warn(string) -> None:
     print(colored("Warning: " + string, "red"))
 
 
-def is_exception(user: Employee | Student) -> bool:
-    exceptions = ["deborahstein", "sraffeld"]
+def is_exception(user: Person) -> bool:
+    exceptions: list[str] = ["deborahstein", "sraffeld"]
     if user.username in exceptions:
         return True
     return False
 
 
-def make_student_row(student) -> dict | None:
-    student = Student(**student)
+def make_student_row(student_dict: dict[str, Any]) -> dict | None:
+    student: Student = Student(**student_dict)
 
     if is_exception(student):
         return None
@@ -64,7 +65,7 @@ def make_student_row(student) -> dict | None:
     if student.inst_email is None or student.last_name is None:
         return None
 
-    patron = {
+    patron: dict[str, str] = {
         "branchcode": "SF",
         "categorycode": category[student.academic_level],
         # fill in Prox number if we have it, or default to UID
@@ -86,7 +87,7 @@ def make_student_row(student) -> dict | None:
         patron["borrowernotes"] = f"Pre-college {today.year}"
     else:
         # handle student major (additional patron attribute)
-        major = None
+        major: str | None = None
         if student.primary_program in stu_major:
             major = str(stu_major[student.primary_program])
             patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
@@ -127,7 +128,7 @@ def expiration_date(person: Employee) -> str:
     """
     # there are 3 etypes: Staff, Instructors, Faculty. Sometimes we do not have
     # an etype but _do_ have a "future_etype".
-    etype = person.etype or person.etype_future
+    etype: str | None = person.etype or person.etype_future
     if not etype:
         warn(
             (
@@ -139,7 +140,7 @@ def expiration_date(person: Employee) -> str:
     d: date = date.fromisoformat(args["--end"])
     if etype == "Instructors":
         # go into next month then subtract the number of days from next month
-        next_mo = d.replace(day=28) + timedelta(days=4)
+        next_mo: date = d.replace(day=28) + timedelta(days=4)
         return str(next_mo - timedelta(days=next_mo.day))
     elif etype == "Staff":
         # one year from now
@@ -157,14 +158,13 @@ def expiration_date(person: Employee) -> str:
             return str(d.replace(year=d.year + 1, month=1, day=31))
         else:
             warn(
-                f"""End date {args['--end']} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will given the Staff expiration date of one year."""
+                f"""End date {args['--end']} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will be given the Staff expiration date of one year."""
             )
             return str(today.replace(year=today.year + 1))
-    pass
 
 
-def make_employee_row(person) -> dict | None:
-    person = Employee(**person)
+def make_employee_row(person_dict: dict[str, Any]) -> dict | None:
+    person: Employee = Employee(**person_dict)
 
     if is_exception(person):
         return None
@@ -179,7 +179,7 @@ def make_employee_row(person) -> dict | None:
 
     # create a hybrid program/department field
     # some people have neither (tend to be adjuncts or special programs staff)
-    prodep = None
+    prodep: str | None = None
     if person.program:
         prodep = person.program
     elif person.department:
@@ -210,9 +210,10 @@ def make_employee_row(person) -> dict | None:
             ).format(person.username)
         )
 
-    patron = {
+    patron: dict[str, str] = {
         "branchcode": "SF",
-        "categorycode": category.get(person.etype or person.etype_future or "Staff"),
+        "categorycode": category.get(person.etype or person.etype_future or "Staff")
+        or "STAFF",
         # fill in Prox number if we have it, or default to UID
         "cardnumber": prox_map.get(person.universal_id, person.universal_id).strip(),
         "dateenrolled": today.isoformat(),
@@ -220,14 +221,14 @@ def make_employee_row(person) -> dict | None:
         "email": person.work_email,
         "firstname": person.first_name,
         "patron_attributes": "UNIVID:" + person.universal_id,
-        "phone": person.work_phone,
+        "phone": person.work_phone or "",
         "surname": person.last_name,
         "userid": person.username,
     }
 
     # handle faculty/staff department (additional patron attribute)
     if prodep and prodep in fac_depts:
-        code = str(fac_depts[prodep])
+        code: str = str(fac_depts[prodep])
         patron["patron_attributes"] += ",FACDEPT:{}".format(code)
     elif prodep:
         # there's a non-empty program/department value we haven't accounted for
@@ -254,22 +255,22 @@ def file_exists(fn) -> bool:
     return True
 
 
-def proc_students(pc=False) -> None:
+def proc_students(pc: bool = False) -> None:
     if pc:
-        file = files["precollege"]
-        prefix = " pre-college "
+        file: str = files["precollege"]
+        prefix: str = "pre-college "
     else:
         file = files["student"]
-        prefix = " "
+        prefix = ""
 
     if file_exists(file):
-        print(f"Adding{prefix}students to Koha patron CSV.")
-        with open(file, "r") as file:
-            students = get_entries(json.load(file))
+        print(f"Adding {prefix}students to Koha patron CSV.")
+        with open(file, "r") as fh:
+            students: list[dict] = get_entries(json.load(fh))
             with open(files["output"], "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for stu in students:
-                    row = make_student_row(stu)
+                    row: dict | None = make_student_row(stu)
                     if row:
                         writer.writerow(row)
 
@@ -278,12 +279,12 @@ def proc_staff() -> None:
     if file_exists(files["employee"]):
         print("Adding Faculty/Staff to Koha patron CSV.")
         with open(files["employee"], "r") as file:
-            employees = get_entries(json.load(file))
+            employees: list[dict] = get_entries(json.load(file))
             # open in append mode & don't add header row
             with open(files["output"], "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for employee in employees:
-                    row = make_employee_row(employee)
+                    row: dict | None = make_employee_row(employee)
                     if row:
                         writer.writerow(row)
 
@@ -304,12 +305,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    args = docopt(__doc__, version="Create Koha CSV 1.0")  # type: ignore
-    PROX_FILE = args["<prox_report.csv>"]
+    args: dict = docopt(__doc__, version="Create Koha CSV 1.0")
+    PROX_FILE: str = args["<prox_report.csv>"]
     if not file_exists(PROX_FILE):
         exit(1)
-    prox_map = create_prox_map(PROX_FILE)
-    koha_fields = [
+    prox_map: dict[str, str] = create_prox_map(PROX_FILE)
+    koha_fields: list[str] = [
         "branchcode",
         "cardnumber",
         "categorycode",

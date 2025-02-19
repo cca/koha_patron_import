@@ -3,9 +3,10 @@ import csv
 from datetime import date
 import json
 from pathlib import Path
+from typing import Any
 
 import click
-from requests import Response
+from requests import Response, Session
 from requests.exceptions import HTTPError
 from termcolor import colored
 
@@ -21,7 +22,7 @@ PROX_EXCEPTIONS: list[str] = ["1458769"]
 NAME_EXCEPTIONS: list[str] = []  # not needed yet
 
 
-def create_prox_map(proxfile: Path) -> dict[str, str]:
+def create_prox_map(proxfile: str | Path) -> dict[str, str]:
     """Create a dict of { CCA ID : prox number } so we can look up patrons'
     card numbers by their ID. Prox report does not have other identifiers like
     username or email so we use CCA (universal, not student) ID.
@@ -37,7 +38,7 @@ def create_prox_map(proxfile: Path) -> dict[str, str]:
     """
     with open(proxfile, mode="r") as file:
         # check the first line, which we'll always skip, to ensure CSV format
-        first_line = file.readline()
+        first_line: str = file.readline()
         if "Active Accounts with Prox IDs" in first_line:
             # skip the first 3 lines ("List of", empty line, then header row)
             file.readline()
@@ -195,7 +196,7 @@ def mk_missing_file(missing: list[Person], ptype: str) -> None:
     Args:
         missing (list): list of workday people objects
     """
-    filename = f"{date.today().isoformat()}-missing-{ptype.lower()}s.json"
+    filename: str = f"{date.today().isoformat()}-missing-{ptype.lower()}s.json"
     with open(filename, "w") as file:
         json.dump(missing, file, indent=2)
         print(f"\nWrote {len(missing)} missing patrons to {filename}")
@@ -204,7 +205,7 @@ def mk_missing_file(missing: list[Person], ptype: str) -> None:
 def load_data(filename: Path) -> list[Person]:
     people_dicts: list[dict] = []
     with open(filename, "r") as file:
-        people_dicts = get_entries(json.load(file))
+        people_dicts: list[dict] = get_entries(json.load(file))
 
         if people_dicts[0].get("employee_id"):
             return [Employee(**p) for p in people_dicts]
@@ -246,7 +247,7 @@ def summary(totals: dict[str, int]) -> None:
 def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
     # global vars that other functions need to access
     global results
-    results = {
+    results: dict[str, Any] = {
         "missing": [],
         "totals": {
             "missing": 0,
@@ -258,7 +259,7 @@ def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
         },
     }
     global http
-    http = request_wrapper()
+    http: Session = request_wrapper()
 
     if prox:
         prox_map: dict[str, str] = create_prox_map(prox)

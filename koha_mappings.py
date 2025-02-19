@@ -1,6 +1,6 @@
 # this translates academic_level (for students) or etype (for employees) into
 # our Koha patron categories
-category = {
+category: dict[str, str] = {
     "Faculty": "FACULTY",
     "Graduate": "GRAD",
     "Instructors": "SPECIALFAC",
@@ -15,7 +15,7 @@ category = {
 # 5: Visual Studies (undergrad), 6: Visual Critical Studies (grad),
 # 7: Writing & Comics, 8: Wattis, 9: CAPL, 10: First Year, a: Administrative,
 # b: Other/Special (interdisciplinary)
-fac_depts = {
+fac_depts: dict[str, str | int | None] = {
     "Academic Affairs": "a",
     "Advancement": "a",
     "All Faculty": None,
@@ -97,7 +97,7 @@ fac_depts = {
 # Codes are configured in Koha's Authorized Values:
 # https://library-staff.cca.edu//cgi-bin/koha/admin/authorised_values.pl
 # formerly known as "PCODE3" in Millennium, "STUDENTMAJ" patron attribute in Koha
-stu_major = {
+stu_major: dict[str, int] = {
     "Animation": 1,
     "Architecture": 2,
     "Ceramics": 3,
