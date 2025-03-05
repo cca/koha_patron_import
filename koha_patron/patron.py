@@ -4,7 +4,7 @@ from .config import config
 from .request_wrapper import request_wrapper
 
 
-PATRON_READ_ONLY_FIELDS = ("anonymized", "restricted", "updated_on")
+PATRON_READ_ONLY_FIELDS = ("anonymized", "expired", "restricted", "updated_on")
 
 
 class Patron(SimpleNamespace):
