@@ -231,6 +231,22 @@ def summary(totals: dict[str, int]) -> None:
     )
 
 
+# global vars that other functions need to access
+# define outside of fn scope so we can annotate
+http: Session = request_wrapper()
+results: dict[str, Any] = {
+    "missing": [],
+    "totals": {
+        "missing": 0,
+        "error": 0,
+        "updated": 0,
+        "unchanged": 0,
+        "name change": 0,
+        "prox change": 0,
+    },
+}
+
+
 @click.command()
 @click.help_option("--help", "-h")
 @click.option(
@@ -245,21 +261,7 @@ def summary(totals: dict[str, int]) -> None:
 )
 @click.option("-l", "--limit", help="Limit the number of patrons to check", type=int)
 def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
-    # global vars that other functions need to access
     global results
-    results: dict[str, Any] = {
-        "missing": [],
-        "totals": {
-            "missing": 0,
-            "error": 0,
-            "updated": 0,
-            "unchanged": 0,
-            "name change": 0,
-            "prox change": 0,
-        },
-    }
-    global http
-    http: Session = request_wrapper()
 
     if prox:
         prox_map: dict[str, str] = create_prox_map(prox)
