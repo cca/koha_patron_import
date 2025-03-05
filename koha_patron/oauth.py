@@ -1,6 +1,12 @@
+import os
+
 import requests
 
 from .config import config
+
+
+# ByWater's SSL cert used to cause problems, this allows a workaround
+verify: bool = bool(os.environ.get("SSL_VERIFY", True))
 
 
 def get_token():
@@ -13,7 +19,7 @@ def get_token():
         "grant_type": "client_credentials",
     }
     response = requests.post(
-        config["api_root"] + "/oauth/token", data=data, verify=False
+        config["api_root"] + "/oauth/token", data=data, verify=verify
     )
     token = str(response.json()["access_token"])
     return token

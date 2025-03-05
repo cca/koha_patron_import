@@ -1,16 +1,17 @@
-""" create patron record via Koha REST API """
+"""create patron record via Koha REST API"""
 
-import urllib3
+import os
+
+# import urllib3
 
 import requests
 
-from koha_mappings import category
-from .config import config
+from config import config
 
 
-# ByWater's SSL cert causes problems so every request has verify=False
-# and we do this to silence printed warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# ByWater's SSL cert used to cause problems, this silences printed warnings
+# urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+verify: bool = bool(os.environ.get("SSL_VERIFY", True))
 
 
 def get_oauth_token():
@@ -23,7 +24,9 @@ def get_oauth_token():
         "grant_type": "client_credentials",
     }
     response = requests.post(
-        config["api_root"] + "/oauth/token", data=data, verify=False
+        config["api_root"] + "/oauth/token",
+        data=data,
+        verify=verify,
     )
     token = str(response.json()["access_token"])
     return token
@@ -47,9 +50,12 @@ def add_patron(patron, token=None):
         "Authorization": "Bearer " + token,
         "Content-Type": "application/json",
     }
-    # @TODO try/except block to work around OAuth token expiring
+    # TODO try/except block to work around OAuth token expiring
     response = requests.post(
-        config["api_root"] + "/patrons", json=patron, headers=headers, verify=False
+        config["api_root"] + "/patrons",
+        json=patron,
+        headers=headers,
+        verify=verify,
     )
     return response
 
@@ -58,7 +64,7 @@ def add_patron(patron, token=None):
 # this outlines, more or less, our idea of a minimum viable record
 patron = {
     "address": "",
-    "category_id": category["Staff"],
+    "category_id": "STAFF",
     "city": "San Francisco",
     "email": "testy@cca.edu",
     "firstname": "Testy",
@@ -70,3 +76,4 @@ patron = {
 
 token = get_oauth_token()
 add_patron(patron, token)
+print(f"Added patron {patron['firstname']} {patron['surname']} ({patron['userid']})")
