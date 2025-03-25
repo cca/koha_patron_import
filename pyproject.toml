@@ -1,0 +1,17 @@
+[project]
+name = "patron-import"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1.8",
+    "docopt>=0.6.2",
+    "email-validator>=2.2.0",
+    "pydantic>=2.10.6",
+    "requests>=2.32.3",
+    "termcolor>=2.5.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]

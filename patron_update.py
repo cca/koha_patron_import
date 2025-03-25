@@ -109,7 +109,7 @@ def skipped_employee(wd: Employee) -> bool:
     )
 
 
-def check_patron(workday: Person, prox: str | None, dryrun: bool):
+def check_patron(workday: Person, prox: str | None, dry_run: bool):
     """Try to find Koha account given WD profile.
     If cardnumber or name have changed,
     pass the new prox num to update_patron(koha, wd, prox).
@@ -130,7 +130,7 @@ def check_patron(workday: Person, prox: str | None, dryrun: bool):
             missing_patron(workday.model_dump(mode="json"))
         elif len(patrons) == 1:
             if has_changed(patrons[0], workday, prox):
-                update_patron(patrons[0], workday, prox, dryrun)
+                update_patron(patrons[0], workday, prox, dry_run)
             else:
                 results["totals"]["unchanged"] += 1
         else:
@@ -140,7 +140,7 @@ def check_patron(workday: Person, prox: str | None, dryrun: bool):
             )
 
 
-def update_patron(koha: dict, workday: Person, prox: str | None, dryrun: bool) -> None:
+def update_patron(koha: dict, workday: Person, prox: str | None, dry_run: bool) -> None:
     print(f"Updating patron {koha['userid']}", end=" ")
 
     # name change
@@ -177,7 +177,7 @@ def update_patron(koha: dict, workday: Person, prox: str | None, dryrun: bool) -
     for field in PATRON_READ_ONLY_FIELDS:
         koha.pop(field)
 
-    if not dryrun:
+    if not dry_run:
         response: Response = http.put(
             "{}/patrons/{}".format(
                 config["api_root"],
@@ -250,9 +250,19 @@ results: dict[str, Any] = {
 @click.command()
 @click.help_option("--help", "-h")
 @click.option(
-    "-w", "--workday", help="Workday JSON file", required=True, type=click.Path()
+    "-w",
+    "--workday",
+    help="Workday JSON file",
+    required=True,
+    type=click.Path(dir_okay=False, exists=True, readable=True),
 )
-@click.option("-p", "--prox", help="Prox CSV file", type=click.Path())
+@click.option(
+    "-p",
+    "--prox",
+    help="Prox CSV file",
+    required=False,
+    type=click.Path(dir_okay=False, exists=True, readable=True),
+)
 @click.option(
     "-d",
     "--dry-run",
@@ -260,7 +270,12 @@ results: dict[str, Any] = {
     is_flag=True,
 )
 @click.option("-l", "--limit", help="Limit the number of patrons to check", type=int)
-def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
+def main(
+    workday: Path,
+    dry_run: bool,
+    limit: None | int,
+    prox: Path | None = None,
+):
     global results
 
     if prox:
@@ -285,7 +300,7 @@ def main(workday: Path, prox: Path, dry_run: bool, limit: None | int):
         # skip incomplete students (username = id when they haven't chosen one yet)
         if isinstance(person, Student) and not person.inst_email:
             continue
-        check_patron(person, prox_map.get(person.universal_id), dryrun=dry_run)
+        check_patron(person, prox_map.get(person.universal_id), dry_run=dry_run)
 
     if len(results["missing"]) > 0:
         mk_missing_file(results["missing"], type(data[0]).__name__)
