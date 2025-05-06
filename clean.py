@@ -1,7 +1,8 @@
+"""Deletes files involved in the patron load process."""
+
 from datetime import date
 import os
 
-# ! this script is _very_ slow, maybe because of this import? Could copy-paste files dict instead
 from create_koha_csv import files
 
 today: str = date.today().isoformat()

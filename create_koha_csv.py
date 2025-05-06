@@ -124,7 +124,6 @@ def expiration_date(person: Employee) -> str:
         added during Fall, this is Jan 31 of the next year. For faculty added
         during Spring, this is May 31 of the current year. For staff, it is the
         last day of the last month of the impending semester.
-
     """
     # there are 3 etypes: Staff, Instructors, Faculty. Sometimes we do not have
     # an etype but _do_ have a "future_etype".
