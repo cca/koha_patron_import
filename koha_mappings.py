@@ -135,6 +135,7 @@ stu_major: dict[str, int] = {
     "Interaction Design": 13,
     "Interior Design": 14,
     "Jewelry and Metal Arts": 15,
+    "Non-Degree (Virtual Learning)": 33,
     "Painting and Drawing": 28,
     "Photography": 29,
     # Printmaking -> Printmedia 2019
