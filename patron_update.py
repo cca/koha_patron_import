@@ -233,7 +233,7 @@ def summary(totals: dict[str, int]) -> None:
 
 # global vars that other functions need to access
 # define outside of fn scope so we can annotate
-http: Session = request_wrapper()
+http: Session | None = request_wrapper()
 results: dict[str, Any] = {
     "missing": [],
     "totals": {

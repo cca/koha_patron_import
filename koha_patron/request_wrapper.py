@@ -10,17 +10,16 @@ from .oauth import get_token
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def request_wrapper():
-    # get a new OAuth token if there isn't one in the global namespace
-    if "token" not in globals():
-        global token
-        token = get_token()
-    headers = {
-        "Accept": "application/json",
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json",
-    }
-    session = requests.Session()
-    session.verify = False
-    session.headers.update(headers)
-    return session
+def request_wrapper() -> requests.Session | None:
+    token: str | None = get_token()
+    if token:
+        headers: dict[str, str] = {
+            "Accept": "application/json",
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json",
+        }
+        session = requests.Session()
+        session.verify = False
+        session.headers.update(headers)
+        return session
+    return None
