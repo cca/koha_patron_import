@@ -7,7 +7,7 @@ dependencies = [
     "docopt>=0.6",
     "email-validator>=2.2",
     "pydantic>=2.11",
-    "requests>=2.32",
+    "requests==2.32.5",
     "termcolor>=3.1",
 ]
 
