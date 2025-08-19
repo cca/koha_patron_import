@@ -15,6 +15,8 @@ CCA's outline of adding new patrons before the semester:
 1. Go to your Koha staff side, find your patron record, go to **More** > **Manage API Keys** and create a new key.
 1. Copy koha_patron/example.config.py to koha_patron/config.py and fill in your API key's client ID and secret.
 
+Note that **we must be signed into the campus VPN** to use the Koha API, otherwise we will be blocked by Cloudflare.
+
 ## Sync Names & Card Numbers
 
 On a regular basis, we sync names from Workday and card number changes from the TouchNet report to Koha, so that patrons who changed their preferred names or lost or changed their CCA ID cards don't have to update their account themselves.
