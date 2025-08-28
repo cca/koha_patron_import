@@ -5,7 +5,8 @@ requires-python = ">=3.11"
 dependencies = [
     "click>=8.1",
     "docopt>=0.6",
-    "email-validator>=2.2",
+    # needed for pydantic EmailStr even though it is not imported directly
+    "email-validator==2.3",
     "pydantic>=2.11",
     "requests==2.32.5",
     "termcolor>=3.1",
