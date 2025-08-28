@@ -5,7 +5,6 @@ from requests.exceptions import HTTPError
 
 from .config import config
 
-
 # ByWater's SSL cert used to cause problems, this allows a workaround
 verify: bool = bool(os.environ.get("SSL_VERIFY", True))
 

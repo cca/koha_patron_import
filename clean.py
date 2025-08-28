@@ -1,7 +1,7 @@
 """Deletes files involved in the patron load process."""
 
-from datetime import date
 import os
+from datetime import date
 
 from create_koha_csv import files
 
@@ -14,5 +14,5 @@ for file in files.values():
     try:
         os.remove(file)
         print(f"Deleted {file}")
-    except:
+    except FileNotFoundError:
         print(f"Couldn't find {file} to delete")

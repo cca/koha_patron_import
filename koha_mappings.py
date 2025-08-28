@@ -141,7 +141,6 @@ stu_major: dict[str, int] = {
     # Printmaking -> Printmedia 2019
     "Printmaking": 30,
     "Printmedia": 30,
-    "Printmedia": 30,
     "Sculpture": 31,
     "Textiles": 32,
     "Undeclared, UG": 33,

@@ -6,7 +6,7 @@ import subprocess
 GS_BUCKET = "integration-success"
 
 
-def main(args):
+def main(args) -> None:
     # Download pre-college JSON files
     if args.pc:
         subprocess.run(
@@ -47,5 +47,5 @@ if __name__ == "__main__":
         help="download precollege student data (only needed before summer)",
         action="store_true",
     )
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
     main(args)

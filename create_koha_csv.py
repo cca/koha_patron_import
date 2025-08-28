@@ -20,10 +20,11 @@ override them with the following environment variables:
     EMPLOYEE_DATA=employee_data.json
     OUTPUT_FILE=patron_bulk_import.csv
 """
+
 import csv
-from datetime import date, timedelta
 import json
 import os
+from datetime import date, timedelta
 from typing import Any
 
 from docopt import docopt
@@ -39,7 +40,7 @@ files: dict[str, str] = {
     "student": os.environ.get("STUDENT_DATA", "student_data.json"),
     "precollege": os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
     "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
-    "output": os.environ.get("OUTPUT_FILE", f"patron_bulk_import.csv"),
+    "output": os.environ.get("OUTPUT_FILE", "patron_bulk_import.csv"),
 }
 
 
@@ -157,7 +158,7 @@ def expiration_date(person: Employee) -> str:
             return str(d.replace(year=d.year + 1, month=1, day=31))
         else:
             warn(
-                f"""End date {args['--end']} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will be given the Staff expiration date of one year."""
+                f"""End date {args["--end"]} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will be given the Staff expiration date of one year."""
             )
             return str(today.replace(year=today.year + 1))
 
@@ -205,7 +206,7 @@ def make_employee_row(person_dict: dict[str, Any]) -> dict | None:
     ):
         warn(
             (
-                "Instructor {} is not a Special Programs Instructor, check " "record."
+                "Instructor {} is not a Special Programs Instructor, check record."
             ).format(person.username)
         )
 
@@ -233,9 +234,7 @@ def make_employee_row(person_dict: dict[str, Any]) -> dict | None:
         # there's a non-empty program/department value we haven't accounted for
         warn(
             """No mapping in koha_mappings.fac_depts for faculty/staff prodep
-        "{}", see patron {}""".format(
-                prodep, person.username
-            )
+        "{}", see patron {}""".format(prodep, person.username)
         )
 
     if prodep is None:

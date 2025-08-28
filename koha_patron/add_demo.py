@@ -1,29 +1,27 @@
 """create patron record via Koha REST API"""
 
 import os
+from typing import Any
 
 # import urllib3
-
 import requests
-
 from config import config
-
 
 # ByWater's SSL cert used to cause problems, this silences printed warnings
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 verify: bool = bool(os.environ.get("SSL_VERIFY", True))
 
 
-def get_oauth_token():
+def get_oauth_token() -> str:
     """Acquire an OAuth token for Koha
 
     returns: OAuth token (string)"""
-    data = {
+    data: dict[str, str] = {
         "client_id": config["client_id"],
         "client_secret": config["client_secret"],
         "grant_type": "client_credentials",
     }
-    response = requests.post(
+    response: requests.Response = requests.post(
         config["api_root"] + "/oauth/token",
         data=data,
         verify=verify,
@@ -32,7 +30,7 @@ def get_oauth_token():
     return token
 
 
-def add_patron(patron, token=None):
+def add_patron(patron, token: None | str) -> requests.Response:
     """Create a Koha Patron using the API
 
     patron: dict describing patron. Required to contain surname, address, city,
@@ -45,13 +43,13 @@ def add_patron(patron, token=None):
     if token is None:
         token = get_oauth_token()
 
-    headers = {
+    headers: dict[str, Any] = {
         "Accept": "application/json",
         "Authorization": "Bearer " + token,
         "Content-Type": "application/json",
     }
     # TODO try/except block to work around OAuth token expiring
-    response = requests.post(
+    response: requests.Response = requests.post(
         config["api_root"] + "/patrons",
         json=patron,
         headers=headers,
@@ -74,6 +72,6 @@ patron = {
     "userid": "testy",
 }
 
-token = get_oauth_token()
+token: str = get_oauth_token()
 add_patron(patron, token)
 print(f"Added patron {patron['firstname']} {patron['surname']} ({patron['userid']})")

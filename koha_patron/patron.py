@@ -1,10 +1,15 @@
 from types import SimpleNamespace
+from typing import Literal
 
 from .config import config
 from .request_wrapper import request_wrapper
 
-
-PATRON_READ_ONLY_FIELDS = ("anonymized", "expired", "restricted", "updated_on")
+PATRON_READ_ONLY_FIELDS: tuple[
+    Literal["anonymized"],
+    Literal["expired"],
+    Literal["restricted"],
+    Literal["updated_on"],
+] = ("anonymized", "expired", "restricted", "updated_on")
 
 
 class Patron(SimpleNamespace):
@@ -28,6 +33,8 @@ class Patron(SimpleNamespace):
 
     def delete(self):
         http = request_wrapper()
+        if http is None:
+            raise Exception("Failed to create HTTP session")
         response = http.delete(
             "{}/patrons/{}".format(config["api_root"], self.patron_id)
         )
@@ -37,6 +44,8 @@ class Patron(SimpleNamespace):
     def get(self):
         # sync local object with Koha data from API, used in __init__
         http = request_wrapper()
+        if http is None:
+            raise Exception("Failed to create HTTP session")
         response = http.get(
             "{}/patrons/{}".format(
                 config["api_root"],
@@ -51,6 +60,8 @@ class Patron(SimpleNamespace):
     def get_attributes(self):
         # get all extended attributes
         http = request_wrapper()
+        if http is None:
+            raise Exception("Failed to create HTTP session")
         response = http.get(
             "{}/patrons/{}/extended_attributes".format(
                 config["api_root"], self.patron_id
@@ -63,6 +74,8 @@ class Patron(SimpleNamespace):
     def update(self):
         # sync local object to Koha
         http = request_wrapper()
+        if http is None:
+            raise Exception("Failed to create HTTP session")
         response = http.put(
             "{}/patrons/{}".format(
                 config["api_root"],

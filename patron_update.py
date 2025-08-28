@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import csv
-from datetime import date
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ from termcolor import colored
 from koha_patron.config import config
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
 from koha_patron.request_wrapper import request_wrapper
-from workday.models import Employee, Student, Person
+from workday.models import Employee, Person, Student
 from workday.utils import get_entries
 
 # Universal IDs of patrons who should not have their prox numbers updated
@@ -22,13 +22,13 @@ PROX_EXCEPTIONS: list[str] = ["1458769"]
 NAME_EXCEPTIONS: list[str] = []  # not needed yet
 
 
-def create_prox_map(proxfile: str | Path) -> dict[str, str]:
+def create_prox_map(prox_file: str | Path) -> dict[str, str]:
     """Create a dict of { CCA ID : prox number } so we can look up patrons'
     card numbers by their ID. Prox report does not have other identifiers like
     username or email so we use CCA (universal, not student) ID.
 
     Args:
-        proxfile (str|Path): path to the prox report CSV
+        prox_file (str|Path): path to the prox report CSV
 
     Raises:
         RuntimeError: if the CSV is not in the expected format
@@ -36,7 +36,7 @@ def create_prox_map(proxfile: str | Path) -> dict[str, str]:
     Returns:
         dict: map of CCA IDs to prox numbers
     """
-    with open(proxfile, mode="r") as file:
+    with open(prox_file, mode="r") as file:
         # check the first line, which we'll always skip, to ensure CSV format
         first_line: str = file.readline()
         if "Active Accounts with Prox IDs" in first_line:
@@ -51,7 +51,7 @@ def create_prox_map(proxfile: str | Path) -> dict[str, str]:
             pass
         else:
             raise RuntimeError(
-                f'The CSV of prox numbers "{proxfile}" was in an unexpected format. It should be a CSV export from OneCard either unmodified or with the two preamble rows removed but the header row present. Double-check the format of the file.'
+                f'The CSV of prox numbers "{prox_file}" was in an unexpected format. It should be a CSV export from OneCard either unmodified or with the two preamble rows removed but the header row present. Double-check the format of the file.'
             )
         # read rows from the rest of the CSV
         reader = csv.reader(file)
@@ -87,7 +87,7 @@ def handle_http_error(response: Response, workday: Person, prox: str | None) -> 
 
 
 def missing_patron(workday: dict) -> None:
-    print(f'Could not find a patron with a userid of {workday["username"]} in Koha.')
+    print(f"Could not find a patron with a userid of {workday['username']} in Koha.")
     results["totals"]["missing"] += 1
     results["missing"].append(workday)
 
@@ -118,6 +118,8 @@ def check_patron(workday: Person, prox: str | None, dry_run: bool):
         workday (dict): Workday object of personal info
         prox (int): card number
     """
+    if not http:
+        raise Exception("Failed to create HTTP session")
     response: Response = http.get(
         f"{config['api_root']}/patrons?userid={workday.username}&_match=exact"
     )
@@ -178,6 +180,8 @@ def update_patron(koha: dict, workday: Person, prox: str | None, dry_run: bool) 
         koha.pop(field)
 
     if not dry_run:
+        if http is None:
+            raise Exception("Failed to create HTTP session")
         response: Response = http.put(
             "{}/patrons/{}".format(
                 config["api_root"],
@@ -222,12 +226,12 @@ def summary(totals: dict[str, int]) -> None:
     print(
         f"""
 === Summary ===
-- Total patrons: {totals['unchanged'] + totals['updated'] + totals['missing']}
-- Errors: {totals['error']}
-- Missing from Koha: {totals['missing']}
-- Updated: {totals['updated']}
-- Name changes: {totals['name change']}
-- Cardnumber changes: {totals['prox change']}"""
+- Total patrons: {totals["unchanged"] + totals["updated"] + totals["missing"]}
+- Errors: {totals["error"]}
+- Missing from Koha: {totals["missing"]}
+- Updated: {totals["updated"]}
+- Name changes: {totals["name change"]}
+- Cardnumber changes: {totals["prox change"]}"""
     )
 
 

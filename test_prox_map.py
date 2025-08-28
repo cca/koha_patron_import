@@ -1,10 +1,11 @@
 import pytest
+
 from patron_update import create_prox_map
 
 
 def test_create_prox_map_valid_format(tmp_path):
     # Create a temporary CSV file with valid format
-    csv_content = """Active Accounts with Prox IDs
+    csv_content: str = """Active Accounts with Prox IDs
 List of Active Accounts
 "Universal ID","Student ID","Prox ID","Last Name","First Name","End Date","IsInactive"
 "001000001","","000057426       ","Doe","John","12/12/2050","False"
@@ -14,8 +15,8 @@ List of Active Accounts
     csv_file.write_text(csv_content)
 
     # Call the function and check the result
-    result = create_prox_map(csv_file)
-    expected = {
+    result: dict[str, str] = create_prox_map(csv_file)
+    expected: dict[str, str] = {
         "1000001": "57426",
         "1000002": "64819",
     }
@@ -38,7 +39,7 @@ def test_create_prox_map_invalid_format(tmp_path):
 
 def test_create_prox_map_empty_prox(tmp_path):
     # Create a temporary CSV file with empty prox IDs
-    csv_content = """Active Accounts with Prox IDs
+    csv_content: str = """Active Accounts with Prox IDs
 List of Active Accounts
 "Universal ID","Student ID","Prox ID","Last Name","First Name","End Date","IsInactive"
 "001000001","","","Doe","John","12/12/2050","False"
@@ -48,14 +49,14 @@ List of Active Accounts
     csv_file.write_text(csv_content)
 
     # Call the function and check the result
-    result = create_prox_map(csv_file)
-    expected = {}
+    result: dict[str, str] = create_prox_map(csv_file)
+    expected: dict[str, str] = {}
     assert result == expected
 
 
 def test_create_prox_map_header_only(tmp_path):
     # Create a temporary CSV file with leading zeroes in prox IDs
-    csv_content = """"Universal ID","Student ID","Prox ID","Last Name","First Name","End Date","IsInactive"
+    csv_content: str = """"Universal ID","Student ID","Prox ID","Last Name","First Name","End Date","IsInactive"
 "001000001","","000057426       ","Doe","John","12/12/2050","False"
 "001000002","","000057427       ","Smith","Jane","12/12/2050","False"
 """
@@ -63,8 +64,8 @@ def test_create_prox_map_header_only(tmp_path):
     csv_file.write_text(csv_content)
 
     # Call the function and check the result
-    result = create_prox_map(csv_file)
-    expected = {
+    result: dict[str, str] = create_prox_map(csv_file)
+    expected: dict[str, str] = {
         "1000001": "57426",
         "1000002": "57427",
     }

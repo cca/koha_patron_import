@@ -1,9 +1,7 @@
+import requests
 import urllib3
 
-import requests
-
 from .oauth import get_token
-
 
 # ByWater's SSL cert causes problems so every request has verify=False
 # and we do this to silence printed warnings
