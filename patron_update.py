@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 import csv
 import json
+import subprocess
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 import click
-from requests import Response, Session
+from requests import Response
 from requests.exceptions import HTTPError
 from termcolor import colored
 
@@ -15,6 +16,13 @@ from koha_patron.patron import PATRON_READ_ONLY_FIELDS
 from koha_patron.request_wrapper import request_wrapper
 from workday.models import Employee, Person, Student
 from workday.utils import get_entries
+
+
+def check_cca_dns() -> bool:
+    """GlobalProect VPN adds 2 cca.edu DNS resolvers"""
+    result = subprocess.run(["scutil", "--dns"], capture_output=True, text=True)
+    return "cca.edu" in result.stdout
+
 
 # Universal IDs of patrons who should not have their prox numbers updated
 # e.g. because the prox report seems to have the wrong number for them
@@ -235,9 +243,7 @@ def summary(totals: dict[str, int]) -> None:
     )
 
 
-# global vars that other functions need to access
-# define outside of fn scope so we can annotate
-http: Session | None = request_wrapper()
+# global var that other functions access
 results: dict[str, Any] = {
     "missing": [],
     "totals": {
@@ -280,7 +286,16 @@ def main(
     limit: None | int,
     prox: Path | None = None,
 ):
-    global results
+    global http, results
+
+    # Koha blocks external API requests, ensure we're using the VPN
+    if not check_cca_dns():
+        if not click.confirm(
+            "You don't appear to be on the CCA network or VPN. Continue?"
+        ):
+            exit()
+
+    http = request_wrapper()
 
     if prox:
         prox_map: dict[str, str] = create_prox_map(prox)
