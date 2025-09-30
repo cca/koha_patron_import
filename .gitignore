@@ -2,8 +2,9 @@ data/*
 !data/koha_starter.csv
 config.py
 .tmp.drive*
-# expected file names, see `python create_koha_csv.py -h`
+# data files
 employee_data.json
 student_data.json
 student_pre_college_data.json
 patron_bulk_import.csv
+*-missing-*.json
