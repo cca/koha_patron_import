@@ -90,6 +90,7 @@ fac_depts: dict[str, str | int | None] = {
     "Wattis Institute": 8,
     "Writing": 7,
     "Writing & Literature": 7,
+    "Writing and Literature": 7,
     "YASP Instructor": "b",
     "Youth Programs & Continuing Education": "b",
 }
