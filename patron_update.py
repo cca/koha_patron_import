@@ -164,6 +164,7 @@ def update_patron(koha: dict, workday: Person, prox: str | None, dry_run: bool) 
             end=" ",
         )
         koha["firstname"] = workday.first_name
+        koha["preferred_name"] = workday.first_name
         koha["surname"] = workday.last_name
         results["totals"]["name change"] += 1
     else:
