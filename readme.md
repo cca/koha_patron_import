@@ -9,7 +9,7 @@ CCA's outline of adding new patrons before the semester:
 ## Setup
 
 1. Install `gcloud` globally to get `gsutil` (`brew install google-cloud-sdk`)
-1. Set up a python virtual environment & install dependencies: `uv install`
+1. Set up a python virtual environment & install dependencies: `uv sync`
 1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, pre-college students, and courses for recent terms.
 1. Obtain access to the "Active Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
 1. Go to your Koha staff side, find your patron record, go to **More** > **Manage API Keys** and create a new key.
@@ -21,10 +21,11 @@ Note that **we must be signed into the campus VPN** to use the Koha API, otherwi
 
 On a regular basis, we sync names from Workday and card number changes from the TouchNet report to Koha, so that patrons who changed their preferred names or lost or changed their CCA ID cards don't have to update their account themselves.
 
-1. Download the latest report of active account prox numbers from TouchNet
-1. Download Workday JSON files from Google Cloud with `uv run python koha_patron/dl_int_json.py`
+1. Download the latest report of active account prox numbers from TouchNet.
+1. Download Workday JSON files from Google Cloud with `uv run python koha_patron/dl_int_json.py`.
 1. Run `uv run ./patron_update.py -p prox_report.csv -w data.json | tee -a prox_update.log` where data.json is one of the (employee or student) Workday files.
 1. The script prints status messages, a summary of what was updated, and creates a JSON file of patrons who are missing from Koha (which can be used in the step below).
+1. Delete files with personal information when done `uv run python clean.py`.
 
 ## Loading New Patrons
 
