@@ -54,6 +54,7 @@ fac_depts: dict[str, str | int | None] = {
     "Glass": 3,
     "Grad Comics": 7,
     "Grad Design": 2,
+    "Communication Design": 2,
     "Graphic Design": 2,
     "History of Art and Visual Culture": 5,  # formerly Visual Studies
     "Humanities and Sciences": 4,
@@ -119,7 +120,7 @@ stu_major: dict[str, int] = {
     "Graduate Advanced Architectural Design": 19,
     "Graduate Architecture": 16,
     "Graduate Comics": 23,
-    "Graduate Curatorial Practice": 17,  # program no longer exists?
+    "Graduate Curatorial Practice": 17,  # program no longer exists
     "Graduate Design (2 year)": 24,
     "Graduate Design (3 year)": 24,
     "Graduate Design Strategy": 20,
@@ -128,12 +129,14 @@ stu_major: dict[str, int] = {
     "Graduate Interaction Design": 13,
     "Graduate Visual and Critical Studies": 18,
     "Graduate Writing": 27,
-    "Graphic Design": 9,
+    "Communication Design": 9,
+    "Graphic Design": 9,  # -> "Communication Design" 2025
     "History of Art and Visual Culture": 34,
     "Illustration": 10,
     "Individualized Studies": 11,
     "Industrial Design": 12,
     "Interaction Design": 13,
+    "Interdisciplinary": 41,
     "Interior Design": 14,
     "Jewelry and Metal Arts": 15,
     "Non-Degree (Virtual Learning)": 33,
@@ -145,7 +148,7 @@ stu_major: dict[str, int] = {
     "Sculpture": 31,
     "Textiles": 32,
     "Undeclared, UG": 33,
-    # defunct, VS is now "History of Art and Visual Culture" 2020-08
+    # VS -> "History of Art and Visual Culture" 2020
     "Visual Studies": 34,
     "Writing and Literature": 35,
 }
