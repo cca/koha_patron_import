@@ -6,17 +6,6 @@ CCA's outline of adding new patrons before the semester:
 - Use "create_koha_csv.py" to convert the Informer output into Koha's CSV schema
 - [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
 
-## Setup
-
-1. Install `gcloud` globally to get `gsutil` (`brew install google-cloud-sdk`)
-1. Set up a python virtual environment & install dependencies: `uv sync`
-1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, pre-college students, and courses for recent terms.
-1. Obtain access to the "Active Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
-1. Go to your Koha staff side, find your patron record, go to **More** > **Manage API Keys** and create a new key.
-1. Copy koha_patron/example.config.py to koha_patron/config.py and fill in your API key's client ID and secret.
-
-Note that **we must be signed into the campus VPN** to use the Koha API, otherwise we will be blocked by Cloudflare.
-
 ## Sync Names & Card Numbers
 
 On a regular basis, we sync names from Workday and card number changes from the TouchNet report to Koha, so that patrons who changed their preferred names or lost or changed their CCA ID cards don't have to update their account themselves.
@@ -50,6 +39,17 @@ Before each semester, we load new patron accounts using data sourced from Workda
 After import, Koha informs you how many patrons were created & if any rows in the import CSV were malformed. You can copy the full text output of this page and save it into the data directory. You may need to check some duplicate card numbers; username changes not reflected in Koha is a common issue.
 
 There's a `clean.py` script to delete the data files after the import is done.
+
+## Setup
+
+1. Install `gcloud` globally to get `gsutil` (`brew install google-cloud-sdk`)
+1. Set up a python virtual environment & install dependencies: `uv sync`
+1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, pre-college students, and courses for recent terms.
+1. Obtain access to the "Active Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
+1. Go to your Koha staff side, find your patron record, go to **More** > **Manage API Keys** and create a new key.
+1. Copy koha_patron/example.config.py to koha_patron/config.py and fill in your API key's client ID and secret.
+
+Note that **we must be signed into the campus VPN** to use the Koha API, otherwise we will be blocked by Cloudflare.
 
 ## API
 
