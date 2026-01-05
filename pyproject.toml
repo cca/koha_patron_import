@@ -4,7 +4,6 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
     "click==8.3.1",
-    "docopt>=0.6",
     # needed for pydantic EmailStr even though it is not imported directly
     "email-validator==2.3",
     "pydantic==2.12.5",

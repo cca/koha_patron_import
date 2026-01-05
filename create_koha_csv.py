@@ -1,33 +1,11 @@
 #!/usr/bin/env python
-"""
-Usage:
-    create_koha_csv.py <prox_report.csv> --end <YYYY-MM-DD>
-
-Options:
-    --end=DATE  last day of the semester in YYYY-MM-DD format
-
-Converts JSON data from Workday into Koha patron import CSV. We run it once per
-semester just prior start. A couple things should be manually checked:
-
-- Ensure mappings haven't changed (see koha_mappings.py and new-programs.sh)
-- Look up last day of the semester for --end flag
-
-The JSON files from Workday come from the integration-success bucket and the
-script expects them to be in the root and keep their names, but you can
-override them with the following environment variables:
-    STUDENT_DATA=student_data.json
-    PRECOLLEGE_DATA=student_pre_college_data.json
-    EMPLOYEE_DATA=employee_data.json
-    OUTPUT_FILE=patron_bulk_import.csv
-"""
-
 import csv
 import json
 import os
 from datetime import date, timedelta
 from typing import Any
 
-from docopt import docopt
+import click
 from termcolor import colored
 
 from koha_mappings import category, fac_depts, stu_major
@@ -36,12 +14,6 @@ from workday.models import Employee, Person, Student
 from workday.utils import get_entries
 
 today: date = date.today()
-files: dict[str, str] = {
-    "student": os.environ.get("STUDENT_DATA", "student_data.json"),
-    "precollege": os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
-    "employee": os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
-    "output": os.environ.get("OUTPUT_FILE", "patron_bulk_import.csv"),
-}
 
 
 def warn(string) -> None:
@@ -55,7 +27,9 @@ def is_exception(user: Person) -> bool:
     return False
 
 
-def make_student_row(student_dict: dict[str, Any]) -> dict | None:
+def make_student_row(
+    student_dict: dict[str, Any], prox_map: dict[str, str], end_date: str
+) -> dict | None:
     student: Student = Student(**student_dict)
 
     if is_exception(student):
@@ -72,7 +46,7 @@ def make_student_row(student_dict: dict[str, Any]) -> dict | None:
         # fill in Prox number if we have it, or default to UID
         "cardnumber": prox_map.get(student.universal_id, student.universal_id).strip(),
         "dateenrolled": today.isoformat(),
-        "dateexpiry": args["--end"],
+        "dateexpiry": end_date,
         "email": student.inst_email,
         "firstname": student.first_name,
         "patron_attributes": "UNIVID:{},STUID:{}".format(
@@ -109,7 +83,7 @@ Program credentials: {student.programs}"""
     return patron
 
 
-def expiration_date(person: Employee) -> str:
+def expiration_date(person: Employee, end_date: str) -> str:
     """Calculate patron expiration date based on personnel data and the last
     day of the semester.
 
@@ -117,6 +91,8 @@ def expiration_date(person: Employee) -> str:
     ----------
     person : dict
         Dict of user data. "etype" and "future_etype" are most important here.
+    end_date : str
+        Last day of the semester in YYYY-MM-DD format.
 
     Returns
     -------
@@ -137,7 +113,7 @@ def expiration_date(person: Employee) -> str:
             )
         )
         etype = "Staff"
-    d: date = date.fromisoformat(args["--end"])
+    d: date = date.fromisoformat(end_date)
     if etype == "Instructors":
         # go into next month then subtract the number of days from next month
         next_mo: date = d.replace(day=28) + timedelta(days=4)
@@ -158,12 +134,14 @@ def expiration_date(person: Employee) -> str:
             return str(d.replace(year=d.year + 1, month=1, day=31))
         else:
             warn(
-                f"""End date {args["--end"]} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will be given the Staff expiration date of one year."""
+                f"""End date {end_date} is not in May, August, or December so it does not map to a typical semester. Faculty accounts will be given the Staff expiration date of one year."""
             )
             return str(today.replace(year=today.year + 1))
 
 
-def make_employee_row(person_dict: dict[str, Any]) -> dict | None:
+def make_employee_row(
+    person_dict: dict[str, Any], prox_map: dict[str, str], end_date: str
+) -> dict | None:
     person: Employee = Employee(**person_dict)
 
     if is_exception(person):
@@ -217,7 +195,7 @@ def make_employee_row(person_dict: dict[str, Any]) -> dict | None:
         # fill in Prox number if we have it, or default to UID
         "cardnumber": prox_map.get(person.universal_id, person.universal_id).strip(),
         "dateenrolled": today.isoformat(),
-        "dateexpiry": expiration_date(person),
+        "dateexpiry": expiration_date(person, end_date),
         "email": person.work_email,
         "firstname": person.first_name,
         "patron_attributes": "UNIVID:" + person.universal_id,
@@ -253,61 +231,91 @@ def file_exists(fn) -> bool:
     return True
 
 
-def proc_students(pc: bool = False) -> None:
-    if pc:
-        file: str = files["precollege"]
-        prefix: str = "pre-college "
-    else:
-        file = files["student"]
-        prefix = ""
+def proc_students(
+    student_file: str,
+    output_file: str,
+    koha_fields: list[str],
+    prox_map: dict[str, str],
+    end_date: str,
+    pc: bool = False,
+) -> None:
+    prefix: str = "pre-college " if pc else ""
 
-    if file_exists(file):
+    if file_exists(student_file):
         print(f"Adding {prefix}students to Koha patron CSV.")
-        with open(file, "r") as fh:
+        with open(student_file, "r") as fh:
             students: list[dict] = get_entries(json.load(fh))
-            with open(files["output"], "a") as output:
+            with open(output_file, "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for stu in students:
-                    row: dict | None = make_student_row(stu)
+                    row: dict | None = make_student_row(stu, prox_map, end_date)
                     if row:
                         writer.writerow(row)
 
 
-def proc_staff() -> None:
-    if file_exists(files["employee"]):
+def proc_staff(
+    employee_file: str,
+    output_file: str,
+    koha_fields: list[str],
+    prox_map: dict[str, str],
+    end_date: str,
+) -> None:
+    if file_exists(employee_file):
         print("Adding Faculty/Staff to Koha patron CSV.")
-        with open(files["employee"], "r") as file:
+        with open(employee_file, "r") as file:
             employees: list[dict] = get_entries(json.load(file))
             # open in append mode & don't add header row
-            with open(files["output"], "a") as output:
+            with open(output_file, "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
                 for employee in employees:
-                    row: dict | None = make_employee_row(employee)
+                    row: dict | None = make_employee_row(employee, prox_map, end_date)
                     if row:
                         writer.writerow(row)
 
 
-def main() -> None:
-    # write header row
-    with open(files["output"], "w+") as output:
-        writer = csv.DictWriter(output, fieldnames=koha_fields)
-        writer.writeheader()
-    proc_students()
-    proc_students(pc=True)
-    proc_staff()
-
-    print(
-        "Done! Upload the CSV at "
-        "https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl"
-    )
-
-
-if __name__ == "__main__":
-    args: dict = docopt(__doc__, version="Create Koha CSV 1.0")
-    PROX_FILE: str = args["<prox_report.csv>"]
-    if not file_exists(PROX_FILE):
-        exit(1)
-    prox_map: dict[str, str] = create_prox_map(PROX_FILE)
+@click.command()
+@click.argument("prox_report", type=click.Path(exists=True, readable=True))
+@click.option(
+    "--end",
+    "end_date",
+    required=True,
+    help="Last day of the semester in YYYY-MM-DD format",
+)
+@click.option(
+    "--student-data",
+    default=lambda: os.environ.get("STUDENT_DATA", "student_data.json"),
+    help="Path to student data JSON (default: STUDENT_DATA env var or student_data.json)",
+    type=click.Path(readable=True),
+)
+@click.option(
+    "--precollege-data",
+    default=lambda: os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
+    help="Path to pre-college student data JSON (default: PRECOLLEGE_DATA env var or student_pre_college_data.json)",
+    type=click.Path(readable=True),
+)
+@click.option(
+    "--employee-data",
+    default=lambda: os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
+    help="Path to employee data JSON (default: EMPLOYEE_DATA env var or employee_data.json)",
+    type=click.Path(readable=True),
+)
+@click.option(
+    "--output",
+    "output_file",
+    default=lambda: os.environ.get("OUTPUT_FILE", "patron_bulk_import.csv"),
+    help="Path to output CSV file (default: OUTPUT_FILE env var or patron_bulk_import.csv)",
+    type=click.Path(readable=True),
+)
+def main(
+    prox_report: str,
+    end_date: str,
+    student_data: str,
+    precollege_data: str,
+    employee_data: str,
+    output_file: str,
+) -> None:
+    """Convert Workday JSON data into Koha patron import CSV. PROX_REPORT is the path to the prox report CSV."""
+    prox_map: dict[str, str] = create_prox_map(prox_report)
     koha_fields: list[str] = [
         "branchcode",
         "cardnumber",
@@ -322,4 +330,22 @@ if __name__ == "__main__":
         "phone",
         "borrowernotes",
     ]
+
+    # write header row
+    with open(output_file, "w+") as output:
+        writer = csv.DictWriter(output, fieldnames=koha_fields)
+        writer.writeheader()
+
+    proc_students(student_data, output_file, koha_fields, prox_map, end_date)
+    proc_students(
+        precollege_data, output_file, koha_fields, prox_map, end_date, pc=True
+    )
+    proc_staff(employee_data, output_file, koha_fields, prox_map, end_date)
+
+    print(
+        "Done! Upload the CSV at https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl"
+    )
+
+
+if __name__ == "__main__":
     main()

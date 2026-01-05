@@ -3,14 +3,17 @@
 import os
 from datetime import date
 
-from create_koha_csv import files
-
 today: str = date.today().isoformat()
-files["prox"] = "data/prox.csv"
-files["missing_employees"] = f"{today}-missing-employees.json"
-files["missing_students"] = f"{today}-missing-students.json"
 
-for file in files.values():
+for file in [
+    f"{today}-missing-employees.json",
+    "employee_data.json",
+    f"{today}-missing-students.json",
+    "student_data.json",
+    "student_pre_college_data.json",
+    "patron_bulk_import.csv",
+    "data/prox.csv",
+]:
     try:
         os.remove(file)
         print(f"Deleted {file}")
