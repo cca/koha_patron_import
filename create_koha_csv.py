@@ -57,28 +57,24 @@ def make_student_row(
         "userid": student.username,
     }
 
-    # note for pre-college and skip student major calculation
-    if student.academic_level == "Pre-College":
-        patron["borrowernotes"] = f"Pre-college {today.year}"
+    # handle student major (additional patron attribute)
+    major: str | None = None
+    if student.primary_program in stu_major:
+        major = str(stu_major[student.primary_program])
+        patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
     else:
-        # handle student major (additional patron attribute)
-        major: str | None = None
-        if student.primary_program in stu_major:
-            major = str(stu_major[student.primary_program])
-            patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
-        else:
-            for program in student.programs:
-                if program["program"] in stu_major:
-                    major = str(stu_major[program["program"]])
-                    patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
-                    break
-        # we couldn't find a major, print a warning
-        if major is None:
-            warn(
-                f"""Unable to parse major for student {student.username}
+        for program in student.programs:
+            if program["program"] in stu_major:
+                major = str(stu_major[program["program"]])
+                patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
+                break
+    # we couldn't find a major, print a warning
+    if major is None:
+        warn(
+            f"""Unable to parse major for student {student.username}
 Primary program: {student.primary_program}
 Program credentials: {student.programs}"""
-            )
+        )
 
     return patron
 
@@ -237,12 +233,9 @@ def proc_students(
     koha_fields: list[str],
     prox_map: dict[str, str],
     end_date: str,
-    pc: bool = False,
 ) -> None:
-    prefix: str = "pre-college " if pc else ""
-
     if file_exists(student_file):
-        print(f"Adding {prefix}students to Koha patron CSV.")
+        print("Adding students to Koha patron CSV.")
         with open(student_file, "r") as fh:
             students: list[dict] = get_entries(json.load(fh))
             with open(output_file, "a") as output:
@@ -289,12 +282,6 @@ def proc_staff(
     type=click.Path(readable=True),
 )
 @click.option(
-    "--precollege-data",
-    default=lambda: os.environ.get("PRECOLLEGE_DATA", "student_pre_college_data.json"),
-    help="Path to pre-college student data JSON (default: PRECOLLEGE_DATA env var or student_pre_college_data.json)",
-    type=click.Path(readable=True),
-)
-@click.option(
     "--employee-data",
     default=lambda: os.environ.get("EMPLOYEE_DATA", "employee_data.json"),
     help="Path to employee data JSON (default: EMPLOYEE_DATA env var or employee_data.json)",
@@ -311,7 +298,6 @@ def main(
     prox_report: str,
     end_date: str,
     student_data: str,
-    precollege_data: str,
     employee_data: str,
     output_file: str,
 ) -> None:
@@ -338,9 +324,6 @@ def main(
         writer.writeheader()
 
     proc_students(student_data, output_file, koha_fields, prox_map, end_date)
-    proc_students(
-        precollege_data, output_file, koha_fields, prox_map, end_date, pc=True
-    )
     proc_staff(employee_data, output_file, koha_fields, prox_map, end_date)
 
     print(

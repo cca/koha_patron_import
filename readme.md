@@ -20,7 +20,7 @@ On a regular basis, we sync names from Workday and card number changes from the 
 
 Before each semester, we load new patron accounts using data sourced from Workday to create a CSV that's then batch loaded into Koha.
 
-1. Download JSON files from Google Cloud with `uv run python koha_patron/dl_int_json.py`. For a summer term, get pre-college students too with `uv run python koha_patron/dl_int_json.py --pc`. Our scripts expect the JSON files to retain their names, e.g. "student_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs").
+1. Download JSON files from Google Cloud with `uv run python koha_patron/dl_int_json.py`. Our scripts expect the JSON files to retain their names, e.g. "student_data.json". Download the report of "Prox" numbers (Custom Reports > "Accounts with Prox IDs").
 
 1. Check that there are no new student majors not represented in "koha_mappings.py". The script "new-programs.sh" (requires [jq](https://stedolan.github.io/jq/)) parses the employee/student data and writes all major/department values to text files in the data directory, then it runs `git diff` against its own prior iterations.
 
@@ -31,12 +31,13 @@ Before each semester, we load new patron accounts using data sourced from Workda
     - Import file is the CSV we just created
     - **Create a patron list** (useful for reversing mistakes)
     - **Field to use for record matching** is "Username"
-    - Leave all of the default values blank
-    - Set **If matching record is already in the borrowers table:** to "Ignore this one, keep the existing one" and "Replace only included patron attributes" below that. These are the defaults.
+    - The rest of the form inputs can be left on their defaults:
+      - "If matching record is already in the borrowers table" = "Ignore this one, keep the existing one"
+      - "Replace only included patron attributes"
     - Send the welcome email to new patrons
     - Click the **Import** button
 
-After import, Koha informs you how many patrons were created & if any rows in the import CSV were malformed. You can copy the full text output of this page and save it into the data directory. You may need to check some duplicate card numbers; username changes not reflected in Koha is a common issue.
+After import, Koha informs us how many patrons were created & if any rows in the import CSV were malformed. We can copy the full text output of this page and save it into the data directory. We may need to check some duplicate card numbers; username changes not reflected in Koha is a common issue.
 
 There's a `clean.py` script to delete the data files after the import is done.
 
@@ -44,10 +45,10 @@ There's a `clean.py` script to delete the data files after the import is done.
 
 1. Install `gcloud` globally to get `gsutil` (`brew install google-cloud-sdk`)
 1. Set up a python virtual environment & install dependencies: `uv sync`
-1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, pre-college students, and courses for recent terms.
+1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, and courses for recent terms.
 1. Obtain access to the "Active Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
-1. Go to your Koha staff side, find your patron record, go to **More** > **Manage API Keys** and create a new key.
-1. Copy koha_patron/example.config.py to koha_patron/config.py and fill in your API key's client ID and secret.
+1. Go to the Koha staff side, find your patron record, go to **More** > **Manage API Keys** and create a new key.
+1. Copy koha_patron/example.config.py to koha_patron/config.py and fill in the API key's client ID and secret.
 
 Note that **we must be signed into the campus VPN** to use the Koha API, otherwise we will be blocked by Cloudflare.
 

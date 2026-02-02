@@ -10,7 +10,6 @@ for file in [
     "employee_data.json",
     f"{today}-missing-students.json",
     "student_data.json",
-    "student_pre_college_data.json",
     "patron_bulk_import.csv",
     "data/prox.csv",
 ]:

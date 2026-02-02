@@ -5,6 +5,5 @@ config.py
 # data files
 employee_data.json
 student_data.json
-student_pre_college_data.json
 patron_bulk_import.csv
 *-missing-*.json
