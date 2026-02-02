@@ -275,6 +275,7 @@ def proc_staff(
 
 @click.command()
 @click.argument("prox_report", type=click.Path(exists=True, readable=True))
+@click.help_option("-h", "--help")
 @click.option(
     "--end",
     "end_date",
