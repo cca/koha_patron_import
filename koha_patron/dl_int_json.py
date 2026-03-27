@@ -8,7 +8,8 @@ def main() -> None:
     # always download student and employee data
     subprocess.run(
         [
-            "gsutil",
+            "gcloud",
+            "storage",
             "cp",
             f"gs://{GS_BUCKET}/student_data.json",
             ".",
@@ -17,7 +18,8 @@ def main() -> None:
 
     subprocess.run(
         [
-            "gsutil",
+            "gcloud",
+            "storage",
             "cp",
             f"gs://{GS_BUCKET}/employee_data.json",
             ".",

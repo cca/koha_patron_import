@@ -43,7 +43,7 @@ There's a `clean.py` script to delete the data files after the import is done.
 
 ## Setup
 
-1. Install `gcloud` globally to get `gsutil` (`brew install google-cloud-sdk`)
+1. Install `gcloud` globally (`brew install google-cloud-sdk`)
 1. Set up a python virtual environment & install dependencies: `uv sync`
 1. Obtain access to CCA Integrations data in Google Cloud (contact the Integrations Engineer). There should be JSON files present for employees, students, and courses for recent terms.
 1. Obtain access to the "Active Accounts with Prox IDs" report in OneCard/TouchNet. Contact AIS <ais@cca.edu>.
