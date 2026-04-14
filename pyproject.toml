@@ -3,15 +3,15 @@ name = "patron-import"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "click==8.3.1",
+    "click==8.3.2",
     # needed for pydantic EmailStr even though it is not imported directly
     "email-validator==2.3",
-    "pydantic==2.12.5",
-    "requests==2.33.0",
+    "pydantic==2.13.0",
+    "requests==2.33.1",
     "termcolor>=3.1",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest==9.0.2",
+    "pytest==9.0.3",
 ]
