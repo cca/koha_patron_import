@@ -3,6 +3,9 @@
 import os
 from datetime import date
 
+from rich.console import Console
+
+console = Console(highlight=False)
 today: str = date.today().isoformat()
 
 for file in [
@@ -15,6 +18,6 @@ for file in [
 ]:
     try:
         os.remove(file)
-        print(f"Deleted {file}")
+        console.print("[bold green]Deleted[/bold green]", file)
     except FileNotFoundError:
-        print(f"Couldn't find {file} to delete")
+        console.print("[red]Couldn't find[/red]", file, "to delete")

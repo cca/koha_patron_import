@@ -1,10 +1,8 @@
 # Bulk Import Patron Data into Koha ILS
 
-CCA's outline of adding new patrons before the semester:
+The Systems Librarian uses this project to keep patron accounts up to date, running "patron_update.py" monthly and "create_koha_csv.py" as needed (often when the update script finds missing patrons).
 
-- Download JSON from "CCA Integrations" Google Cloud
-- Use "create_koha_csv.py" to convert the Informer output into Koha's CSV schema
-- [Batch import the patron CSV](https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl) on Koha's staff side
+![Patron update script running showing 2 missing patrons, a progress bar, a file of missing patrons being written, and a summary of changes](./data/script-screenshot.jpg)
 
 ## Sync Names & Card Numbers
 

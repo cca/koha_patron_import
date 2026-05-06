@@ -1,5 +1,6 @@
 data/*
 !data/koha_starter.csv
+!data/script-screenshot.jpg
 config.py
 .tmp.drive*
 # data files

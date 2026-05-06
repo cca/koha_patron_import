@@ -9,7 +9,8 @@ from typing import Any
 import click
 from requests import Response
 from requests.exceptions import HTTPError
-from termcolor import colored
+from rich.console import Console
+from rich.progress import Progress
 
 from koha_patron.config import config
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
@@ -17,17 +18,33 @@ from koha_patron.request_wrapper import request_wrapper
 from workday.models import Employee, Person, Student
 from workday.utils import get_entries
 
-
-def check_cca_dns() -> bool:
-    """GlobalProect VPN adds 2 cca.edu DNS resolvers"""
-    result = subprocess.run(["scutil", "--dns"], capture_output=True, text=True)
-    return "cca.edu" in result.stdout
+console = Console()
+# abstract over console.print vs progress.console.print so we can use one fn everywhere
+println = console.print
+# global var other functions update
+results: dict[str, Any] = {
+    "missing": [],
+    "totals": {
+        "missing": 0,
+        "error": 0,
+        "updated": 0,
+        "unchanged": 0,
+        "name change": 0,
+        "prox change": 0,
+    },
+}
 
 
 # Universal IDs of patrons who should not have their prox numbers updated
 # e.g. because the prox report seems to have the wrong number for them
 PROX_EXCEPTIONS: list[str] = ["1458769"]
 NAME_EXCEPTIONS: list[str] = []  # not needed yet
+
+
+def check_cca_dns() -> bool:
+    """GlobalProect VPN adds 2 cca.edu DNS resolvers"""
+    result = subprocess.run(["scutil", "--dns"], capture_output=True, text=True)
+    return "cca.edu" in result.stdout
 
 
 def create_prox_map(prox_file: str | Path) -> dict[str, str]:
@@ -81,21 +98,20 @@ def handle_http_error(response: Response, workday: Person, prox: str | None) -> 
     except HTTPError:
         """log info about HTTP error"""
         results["totals"]["error"] += 1
-        print(colored("Error", "red"), response)
-        print("HTTP Response Headers", response.headers)
-        print(response.text)
-        print(
-            colored(
-                f"""Error for patron {workday.username} """
-                f"""({workday.first_name} {workday.last_name}) with prox """
-                f"""number {prox}""",
-                "red",
-            )
+        println("[bold red]Error[/bold red]", response)
+        println("[dim]HTTP Response Headers[/dim]", response.headers)
+        println(response.text)
+        println(
+            f"[bold red]Error for patron {workday.username} "
+            f"({workday.first_name} {workday.last_name}) with prox "
+            f"number {prox}[/bold red]"
         )
 
 
 def missing_patron(workday: dict) -> None:
-    print(f"Could not find a patron with a userid of {workday['username']} in Koha.")
+    println(
+        f"[yellow]Could not find a patron with a userid of {workday['username']} in Koha.[/yellow]"
+    )
     results["totals"]["missing"] += 1
     results["missing"].append(workday)
 
@@ -151,40 +167,37 @@ def check_patron(workday: Person, prox: str | None, dry_run: bool):
 
 
 def update_patron(koha: dict, workday: Person, prox: str | None, dry_run: bool) -> None:
-    print(f"Updating patron {koha['userid']}", end=" ")
+    message: str = f"[cyan]Updating {koha['userid']}[/cyan]"
 
+    message += f" {koha['firstname']} {koha['surname']}"
     # name change
     if (
         koha["firstname"] != workday.first_name
         or koha["surname"] != workday.last_name
         and workday.universal_id not in NAME_EXCEPTIONS
     ):
-        print(
-            f"{koha['firstname']} {koha['surname']} => {workday.first_name} {workday.last_name}",
-            end=" ",
-        )
+        message += f" [bold]=> {workday.first_name} {workday.last_name}[/bold]"
         koha["firstname"] = workday.first_name
         koha["preferred_name"] = workday.first_name
         koha["surname"] = workday.last_name
         results["totals"]["name change"] += 1
-    else:
-        print(f"{koha['firstname']} {koha['surname']}", end=" ")
 
+    message += f" Cardnumber {koha['cardnumber']}"
     # new prox number
     if (
         prox
         and koha["cardnumber"] != prox
         and workday.universal_id not in PROX_EXCEPTIONS
     ):
-        print(f"Cardnumber {koha['cardnumber']} => {prox}")
+        message += f" [bold]=> {prox}[/bold]"
         # backup old cardnumber in "sort2" field
         koha["statistics_2"] = koha["cardnumber"]
         koha["cardnumber"] = prox
         results["totals"]["prox change"] += 1
-    else:
-        print("Cardnumber", koha["cardnumber"])
 
-    # must do this or PUT request fails b/c we can't edit these fields
+    println(message)
+
+    # ! must do this or PUT request fails b/c we can't edit these fields
     for field in PATRON_READ_ONLY_FIELDS:
         koha.pop(field)
 
@@ -212,7 +225,10 @@ def mk_missing_file(missing: list[Person], ptype: str) -> None:
     filename: str = f"{date.today().isoformat()}-missing-{ptype.lower()}s.json"
     with open(filename, "w") as file:
         json.dump(missing, file, indent=2)
-        print(f"\nWrote {len(missing)} missing patrons to {filename}")
+        console.print(
+            f"[green]Wrote {len(missing)} missing patrons to {filename}[/green]",
+            highlight=False,
+        )
 
 
 def load_data(filename: Path) -> list[Person]:
@@ -220,6 +236,7 @@ def load_data(filename: Path) -> list[Person]:
     with open(filename, "r") as file:
         people_dicts: list[dict] = get_entries(json.load(file))
 
+        # check first dict for id of only the particular type of Person
         if people_dicts[0].get("employee_id"):
             return [Employee(**p) for p in people_dicts]
         elif people_dicts[0].get("student_id"):
@@ -231,31 +248,15 @@ def load_data(filename: Path) -> list[Person]:
 
 
 def summary(totals: dict[str, int]) -> None:
-    # Print summary of changes
-    print(
-        f"""
-=== Summary ===
-- Total patrons: {totals["unchanged"] + totals["updated"] + totals["missing"]}
-- Errors: {totals["error"]}
-- Missing from Koha: {totals["missing"]}
-- Updated: {totals["updated"]}
-- Name changes: {totals["name change"]}
-- Cardnumber changes: {totals["prox change"]}"""
+    console.print(
+        f"""\n[bold cyan]=== Summary ===[/bold cyan]
+[cyan]- Total patrons: {totals["unchanged"] + totals["updated"] + totals["missing"]}[/cyan]
+[red]- Errors: {totals["error"]}[/red]
+[yellow]- Missing from Koha: {totals["missing"]}[/yellow]
+[green]- Updated: {totals["updated"]}[/green]
+[cyan]- Name changes: {totals["name change"]}[/cyan]
+[cyan]- Cardnumber changes: {totals["prox change"]}[/cyan]"""
     )
-
-
-# global var that other functions access
-results: dict[str, Any] = {
-    "missing": [],
-    "totals": {
-        "missing": 0,
-        "error": 0,
-        "updated": 0,
-        "unchanged": 0,
-        "name change": 0,
-        "prox change": 0,
-    },
-}
 
 
 @click.command()
@@ -287,7 +288,7 @@ def main(
     limit: None | int,
     prox: Path | None = None,
 ):
-    global http, results
+    global http, println, results
 
     # Koha blocks external API requests, ensure we're using the VPN
     if not check_cca_dns():
@@ -301,26 +302,31 @@ def main(
     if prox:
         prox_map: dict[str, str] = create_prox_map(prox)
     else:
-        print(
-            colored("No prox file provided, cardnumbers will not be updated.", "yellow")
+        println(
+            "[yellow]No prox file provided, cardnumbers will not be updated.[/yellow]"
         )
         prox_map = {}
 
     if dry_run:
-        print(colored("Dry run: no changes will be made.", "yellow"))
+        println("[yellow]Dry run: no changes will be made.[/yellow]")
 
     data: list[Person] = load_data(workday)
 
-    for i, person in enumerate(data):
-        if limit and i >= limit:
-            break
-        # skip temp/contractor positions
-        if isinstance(person, Employee) and skipped_employee(person):
-            continue
-        # skip incomplete students (username = id when they haven't chosen one yet)
-        if isinstance(person, Student) and not person.inst_email:
-            continue
-        check_patron(person, prox_map.get(person.universal_id), dry_run=dry_run)
+    with Progress() as progress:
+        println = progress.console.print
+        task = progress.add_task("[cyan]Checking patrons...", total=limit or len(data))
+        for i, person in enumerate(data):
+            if limit and i >= limit:
+                break
+            # skip temp/contractor positions and
+            # incomplete students (username = id when they haven't chosen one yet)
+            if (isinstance(person, Employee) and skipped_employee(person)) or (
+                isinstance(person, Student) and not person.inst_email
+            ):
+                progress.update(task, advance=1)
+                continue
+            check_patron(person, prox_map.get(person.universal_id), dry_run=dry_run)
+            progress.update(task, advance=1)
 
     if len(results["missing"]) > 0:
         mk_missing_file(results["missing"], type(data[0]).__name__)

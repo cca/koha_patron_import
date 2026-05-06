@@ -6,18 +6,19 @@ from datetime import date, timedelta
 from typing import Any
 
 import click
-from termcolor import colored
+from rich.console import Console
 
 from koha_mappings import category, fac_depts, stu_major
 from patron_update import create_prox_map
 from workday.models import Employee, Person, Student
 from workday.utils import get_entries
 
+console = Console()
 today: date = date.today()
 
 
-def warn(string) -> None:
-    print(colored("Warning: " + string, "red"))
+def warn(string: str) -> None:
+    console.print(f"[bold red]Warning:[/bold red] {string}")
 
 
 def is_exception(user: Person) -> bool:
@@ -235,7 +236,7 @@ def proc_students(
     end_date: str,
 ) -> None:
     if file_exists(student_file):
-        print("Adding students to Koha patron CSV.")
+        console.print("[cyan]Adding students to Koha patron CSV.[/cyan]")
         with open(student_file, "r") as fh:
             students: list[dict] = get_entries(json.load(fh))
             with open(output_file, "a") as output:
@@ -254,7 +255,7 @@ def proc_staff(
     end_date: str,
 ) -> None:
     if file_exists(employee_file):
-        print("Adding Faculty/Staff to Koha patron CSV.")
+        console.print("[cyan]Adding Faculty/Staff to Koha patron CSV.[/cyan]")
         with open(employee_file, "r") as file:
             employees: list[dict] = get_entries(json.load(file))
             # open in append mode & don't add header row
@@ -326,8 +327,8 @@ def main(
     proc_students(student_data, output_file, koha_fields, prox_map, end_date)
     proc_staff(employee_data, output_file, koha_fields, prox_map, end_date)
 
-    print(
-        "Done! Upload the CSV at https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl"
+    console.print(
+        "[bold green]Done![/bold green] Upload the CSV at [underline]https://library-staff.cca.edu/cgi-bin/koha/tools/import_borrowers.pl[/underline]"
     )
 
 
