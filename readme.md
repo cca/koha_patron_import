@@ -52,6 +52,14 @@ There's a `clean.py` script to delete the data files after the import is done.
 
 Note that **we must be signed into the campus VPN** to use the Koha API, otherwise we will be blocked by Cloudflare.
 
+### Testing & Linting
+
+```sh
+uv run pytest
+uv run ruff check . # type checking
+uv run ruff format --check . # formatting
+```
+
 ## API
 
 Koha has a REST API with a `/patrons` endpoint. Read its documentation at https://library-staff.cca.edu/api/v1/.html
