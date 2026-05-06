@@ -6,7 +6,7 @@ dependencies = [
     "click==8.3.3",
     # needed for pydantic EmailStr even though it is not imported directly
     "email-validator==2.3",
-    "pydantic==2.13.3",
+    "pydantic==2.13.4",
     "requests==2.33.1",
     "termcolor>=3.1",
 ]
