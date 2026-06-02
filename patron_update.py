@@ -87,13 +87,13 @@ def create_prox_map(prox_file: str | Path) -> dict[str, str]:
         # Universal ID => prox number mapping
         # Prox report Univ IDs have varying number of leading zeroes e.g.
         # "001000001", "010000001", so we strip them
-        map: dict[str, str] = {}
+        prox_map: dict[str, str] = {}
         for row in reader:
             # normalize IDs to be last 5 digits
             prox = row[2].rstrip()[4:]
             if prox != "" and int(prox) != 0:
-                map[row[0].lstrip("0")] = prox
-        return map
+                prox_map[row[0].lstrip("0")] = prox
+        return prox_map
 
 
 def handle_http_error(response: Response, workday: Person, prox: str | None) -> None:
