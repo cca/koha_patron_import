@@ -22,7 +22,7 @@ class Patron(SimpleNamespace):
         self.get()
 
     def __repr__(self):
-        return "{} {} ({})".format(self.firstname, self.surname, self.patron_id)
+        return f"{self.firstname} {self.surname} ({self.patron_id})"
 
     def remove_readonly_fields(self):
         # utility method, we must do this before attempting write API operations

@@ -16,3 +16,11 @@ dev = [
     "pytest==9.0.3",
     "ruff==0.15.15",
 ]
+
+[tool.ruff.lint]
+# Bugbear, Pyflakes, import sorting, syntax upgrades, security, simplicity
+select = ["B", "F", "I", "UP", "S", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow `assert` statements in test files
+"**/test*.py" = ["S"]

@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr
 
@@ -9,25 +9,25 @@ etypes = Literal[
 
 class Employee(BaseModel):
     active_status: bool
-    department: Optional[str] = None
+    department: str | None = None
     employee_id: str
-    etype_future: Optional[str] = None
-    etype: Optional[etypes] = None
+    etype_future: str | None = None
+    etype: etypes | None = None
     first_name: str
     is_contingent: bool
-    job_profile: Optional[str] = None
+    job_profile: str | None = None
     last_name: str
-    program: Optional[str] = None
+    program: str | None = None
     universal_id: str
     username: str
-    work_email: Optional[EmailStr] = None
-    work_phone: Optional[str] = None
+    work_email: EmailStr | None = None
+    work_phone: str | None = None
 
 
 class Student(BaseModel):
     academic_level: Literal["Undergraduate", "Graduate", "Pre-College"]
     first_name: str
-    inst_email: Optional[EmailStr] = None
+    inst_email: EmailStr | None = None
     last_name: str
     primary_program: str
     # programs always have program, program_type, sometimes has credentials (but not for nondegree)

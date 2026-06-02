@@ -23,9 +23,7 @@ def warn(string: str) -> None:
 
 def is_exception(user: Person) -> bool:
     exceptions: list[str] = ["deborahstein", "sraffeld"]
-    if user.username in exceptions:
-        return True
-    return False
+    return user.username in exceptions
 
 
 def make_student_row(
@@ -50,9 +48,7 @@ def make_student_row(
         "dateexpiry": end_date,
         "email": student.inst_email,
         "firstname": student.first_name,
-        "patron_attributes": "UNIVID:{},STUID:{}".format(
-            student.universal_id, student.student_id
-        ),
+        "patron_attributes": f"UNIVID:{student.universal_id},STUID:{student.student_id}",
         # "phone": student.get("phone", ""),
         "surname": student.last_name,
         "userid": student.username,
@@ -62,12 +58,12 @@ def make_student_row(
     major: str | None = None
     if student.primary_program in stu_major:
         major = str(stu_major[student.primary_program])
-        patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
+        patron["patron_attributes"] += f",STUDENTMAJ:{major}"
     else:
         for program in student.programs:
             if program["program"] in stu_major:
                 major = str(stu_major[program["program"]])
-                patron["patron_attributes"] += ",STUDENTMAJ:{}".format(major)
+                patron["patron_attributes"] += f",STUDENTMAJ:{major}"
                 break
     # we couldn't find a major, print a warning
     if major is None:
@@ -104,10 +100,8 @@ def expiration_date(person: Employee, end_date: str) -> str:
     etype: str | None = person.etype or person.etype_future
     if not etype:
         warn(
-            (
-                "Employee {} does not have an etype nor a etype_future. They "
-                "will be assigned the Staff expiration date.".format(person.username)
-            )
+            f"Employee {person.username} does not have an etype nor a etype_future. They "
+            "will be assigned the Staff expiration date."
         )
         etype = "Staff"
     d: date = date.fromisoformat(end_date)
@@ -121,10 +115,7 @@ def expiration_date(person: Employee, end_date: str) -> str:
     else:
         # implies faculty
         # Spring => May 31
-        if d.month == 5:
-            return str(d.replace(day=31))
-        # Summer => Aug 31
-        elif d.month == 8:
+        if d.month == 5 or d.month == 8:
             return str(d.replace(day=31))
         # Fall => Jan 31 of the following year
         elif d.month == 12:
@@ -180,9 +171,7 @@ def make_employee_row(
         and person.job_profile not in fac_depts
     ):
         warn(
-            (
-                "Instructor {} is not a Special Programs Instructor, check record."
-            ).format(person.username)
+            f"Instructor {person.username} is not a Special Programs Instructor, check record."
         )
 
     patron: dict[str, str] = {
@@ -204,18 +193,16 @@ def make_employee_row(
     # handle faculty/staff department (additional patron attribute)
     if prodep and prodep in fac_depts:
         code: str = str(fac_depts[prodep])
-        patron["patron_attributes"] += ",FACDEPT:{}".format(code)
+        patron["patron_attributes"] += f",FACDEPT:{code}"
     elif prodep:
         # there's a non-empty program/department value we haven't accounted for
         warn(
-            """No mapping in koha_mappings.fac_depts for faculty/staff prodep
-        "{}", see patron {}""".format(prodep, person.username)
+            f"""No mapping in koha_mappings.fac_depts for faculty/staff prodep
+        "{prodep}", see patron {person.username}"""
         )
 
     if prodep is None:
-        warn(
-            "Employee {} has no academic program or department:".format(person.username)
-        )
+        warn(f"Employee {person.username} has no academic program or department:")
         print(person)
 
     return patron
@@ -237,7 +224,7 @@ def proc_students(
 ) -> None:
     if file_exists(student_file):
         console.print("[cyan]Adding students to Koha patron CSV.[/cyan]")
-        with open(student_file, "r") as fh:
+        with open(student_file) as fh:
             students: list[dict] = get_entries(json.load(fh))
             with open(output_file, "a") as output:
                 writer = csv.DictWriter(output, fieldnames=koha_fields)
@@ -256,7 +243,7 @@ def proc_staff(
 ) -> None:
     if file_exists(employee_file):
         console.print("[cyan]Adding Faculty/Staff to Koha patron CSV.[/cyan]")
-        with open(employee_file, "r") as file:
+        with open(employee_file) as file:
             employees: list[dict] = get_entries(json.load(file))
             # open in append mode & don't add header row
             with open(output_file, "a") as output:

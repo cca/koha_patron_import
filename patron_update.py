@@ -61,7 +61,7 @@ def create_prox_map(prox_file: str | Path) -> dict[str, str]:
     Returns:
         dict: map of CCA IDs to prox numbers
     """
-    with open(prox_file, mode="r") as file:
+    with open(prox_file) as file:
         # check the first line, which we'll always skip, to ensure CSV format
         first_line: str = file.readline()
         if "Active Accounts with Prox IDs" in first_line:
@@ -233,7 +233,7 @@ def mk_missing_file(missing: list[Person], ptype: str) -> None:
 
 def load_data(filename: Path) -> list[Person]:
     people_dicts: list[dict] = []
-    with open(filename, "r") as file:
+    with open(filename) as file:
         people_dicts: list[dict] = get_entries(json.load(file))
 
         # check first dict for id of only the particular type of Person
