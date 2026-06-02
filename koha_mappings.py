@@ -120,6 +120,7 @@ fac_depts: dict[str, str | int | None] = {
 stu_major: dict[str, int] = {
     "Animation": 1,
     "Architecture": 2,
+    "Art and Design Studies": 42,
     "Ceramics": 3,
     "Comics": 40,
     "Communication Design": 9,
