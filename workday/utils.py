@@ -6,6 +6,6 @@ def get_entries(data) -> list[dict]:
     elif data.get("Report_Entry"):
         return data["Report_Entry"]
     else:
-        raise Exception(
+        raise ValueError(
             "Could not find list of users in JSON data—are you sure this is the right file?"
         )

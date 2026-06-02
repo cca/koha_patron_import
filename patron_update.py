@@ -295,11 +295,10 @@ def main(
     global http, println, results
 
     # Koha blocks external API requests, ensure we're using the VPN
-    if not check_cca_dns():
-        if not click.confirm(
-            "You don't appear to be on the CCA network or VPN. Continue?"
-        ):
-            exit()
+    if not check_cca_dns() and not click.confirm(
+        "You don't appear to be on the CCA network or VPN. Continue?"
+    ):
+        exit()
 
     http = request_wrapper()
 
