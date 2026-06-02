@@ -19,7 +19,7 @@ def get_token() -> str | None:
         "grant_type": "client_credentials",
     }
     response: requests.Response = requests.post(
-        config["api_root"] + "/oauth/token", data=data, verify=verify
+        config["api_root"] + "/oauth/token", data=data, timeout=10, verify=verify
     )
     try:
         response.raise_for_status()

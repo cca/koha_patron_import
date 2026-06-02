@@ -4,6 +4,7 @@ import json
 import subprocess
 from datetime import date
 from pathlib import Path
+from shutil import which
 from typing import Any
 
 import click
@@ -43,8 +44,11 @@ NAME_EXCEPTIONS: list[str] = []  # not needed yet
 
 def check_cca_dns() -> bool:
     """GlobalProect VPN adds 2 cca.edu DNS resolvers"""
-    result = subprocess.run(["scutil", "--dns"], capture_output=True, text=True)
-    return "cca.edu" in result.stdout
+    scutil: str | None = which("scutil")
+    if scutil:
+        result = subprocess.run([scutil, "--dns"], capture_output=True, text=True)  # noqa: S603
+        return "cca.edu" in result.stdout
+    return True
 
 
 def create_prox_map(prox_file: str | Path) -> dict[str, str]:

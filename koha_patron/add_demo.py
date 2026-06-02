@@ -24,6 +24,7 @@ def get_oauth_token() -> str:
     response: requests.Response = requests.post(
         config["api_root"] + "/oauth/token",
         data=data,
+        timeout=10,
         verify=verify,
     )
     token = str(response.json()["access_token"])
@@ -53,6 +54,7 @@ def add_patron(patron, token: None | str) -> requests.Response:
         config["api_root"] + "/patrons",
         json=patron,
         headers=headers,
+        timeout=10,
         verify=verify,
     )
     return response
