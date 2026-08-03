@@ -70,8 +70,9 @@ If we do the logical thing of `GET`ting a patron record from the API, modifying 
 
 ```py
 from koha_patron.patron import PATRON_READ_ONLY_FIELDS
+
 for field in PATRON_READ_ONLY_FIELDS:
-    patron.pop(field) # patron = dict of the patron record
+    patron.pop(field)  # patron = dict of the patron record
 ```
 
 ## LICENSE
